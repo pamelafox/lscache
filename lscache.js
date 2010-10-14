@@ -1,4 +1,4 @@
-// Apache 2.0
+// Apache 2.0 license
 
 var lscache = function() {
   var CACHESUFFIX = '-cacheexpiration';
