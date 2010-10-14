@@ -1,3 +1,5 @@
+// Apache 2.0
+
 var lscache = function() {
   var CACHESUFFIX = '-cacheexpiration';
   
