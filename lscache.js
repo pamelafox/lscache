@@ -106,6 +106,8 @@ var lscache = function() {
             return localStorage[key];
           }
         }
+      } else {
+        return localStorage.getItem(key);
       }
       return null;
     }, 
