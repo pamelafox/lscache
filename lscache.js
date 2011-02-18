@@ -58,7 +58,7 @@ var lscache = function() {
               storedKeys.push({key: mainKey, expiration: parseInt(localStorage[key])}); 
             }
           }
-          storedKeys.sort(function(a, b) { return (a-b); });
+          storedKeys.sort(function(a, b) { return (a.expiration-b.expiration); });
           
           for (var i = 0, len=Math.min(30, storedKeys.length); i < len; i++) {
             localStorage.removeItem(storedKeys[i].key);
