@@ -86,6 +86,21 @@ var lscache = function() {
     get: function(key) {
       if (!supportsStorage()) return null;
       
+      function parsedStorage(key) {
+         if (supportsJSON()) {
+           try {
+             // We can't tell if its JSON or a string, so we try to parse
+             var value = JSON.parse(localStorage[key]);
+             return value;
+           } catch(e) {
+             // If we can't parse, it's probably because it isn't an object
+             return localStorage[key];
+           }
+         } else {
+           return localStorage[key];
+         }
+      }
+      
       if (localStorage[expirationKey(key)]) {
         var expirationTime = parseInt(localStorage[expirationKey(key)]);
         if (currentTime() > expirationTime) {
@@ -93,19 +108,10 @@ var lscache = function() {
           localStorage.removeItem(expirationKey(key));
           return null;
         } else {
-          if (supportsJSON()) {
-            try {
-              // We can't tell if its JSON or a string, so we try to parse
-              var value = JSON.parse(localStorage[key]);
-              return value;
-            } catch(e) {
-              // If we can't parse, it's probably because it isn't an object
-              return localStorage[key];
-            }
-          } else {
-            return localStorage[key];
-          }
+          return parsedStorage(key); 
         }
+      } else if (localStorage[key]) {
+        return parsedStorage(key);
       }
       return null;
     }, 
