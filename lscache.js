@@ -52,18 +52,20 @@ var lscache = function() {
           // If we exceeded the quota, then we will sort
           // by the expire time, and then remove the N oldest
           var storedKeys = [];
-          for (var key in localStorage) {
-            if (key.indexOf(CACHESUFFIX) > -1) {
-              var mainKey = key.split(CACHESUFFIX)[0];
-              storedKeys.push({key: mainKey, expiration: parseInt(localStorage[key])}); 
+          for (var storedKey in localStorage) {
+            if (storedKey.indexOf(CACHESUFFIX) > -1) {
+              var mainKey = storedKey.split(CACHESUFFIX)[0];
+              storedKeys.push({key: mainKey, expiration: parseInt(localStorage[storedKey])}); 
             }
           }
           storedKeys.sort(function(a, b) { return (a.expiration-b.expiration); });
           
-          for (var i = 0, len=Math.min(30, storedKeys.length); i < len; i++) {
+          for (var i = 0, len = Math.min(30, storedKeys.length); i < len; i++) {
             localStorage.removeItem(storedKeys[i].key);
             localStorage.removeItem(expirationKey(storedKeys[i].key));
-          }          
+          }
+          // TODO: This could still error if the items we removed were small and this is large
+          localStorage[key] = value;          
         } else {
           // If it was some other error, just give up.
           return;
