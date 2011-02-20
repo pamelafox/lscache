@@ -46,13 +46,14 @@ var lscache = function() {
       }
       
       try {
-        localStorage[key] = value;
+        localStorage.setItem(key, value);
       } catch (e) {
         if (e.name === 'QUOTA_EXCEEDED_ERR') {
           // If we exceeded the quota, then we will sort
           // by the expire time, and then remove the N oldest
           var storedKeys = [];
-          for (var storedKey in localStorage) {
+          for (var i = 0; i < localStorage.length; i++) {
+            storedKey = localStorage.key(i);
             if (storedKey.indexOf(CACHESUFFIX) > -1) {
               var mainKey = storedKey.split(CACHESUFFIX)[0];
               storedKeys.push({key: mainKey, expiration: parseInt(localStorage[storedKey])}); 
@@ -65,7 +66,7 @@ var lscache = function() {
             localStorage.removeItem(expirationKey(storedKeys[i].key));
           }
           // TODO: This could still error if the items we removed were small and this is large
-          localStorage[key] = value;          
+          localStorage.setItem(key, value);          
         } else {
           // If it was some other error, just give up.
           return;
@@ -73,7 +74,7 @@ var lscache = function() {
       }
       
       if (time) {
-        localStorage[expirationKey(key)] = currentTime() + time;
+        localStorage.setItem(expirationKey(key), (currentTime() + time));
       } else {
         // In case they set a time earlier, remove it.
         localStorage.removeItem(expirationKey(key));
@@ -92,19 +93,19 @@ var lscache = function() {
          if (supportsJSON()) {
            try {
              // We can't tell if its JSON or a string, so we try to parse
-             var value = JSON.parse(localStorage[key]);
+             var value = JSON.parse(localStorage.getItem(key));
              return value;
            } catch(e) {
              // If we can't parse, it's probably because it isn't an object
-             return localStorage[key];
+             return localStorage.getItem(key);
            }
          } else {
-           return localStorage[key];
+           return localStorage.getItem(key);
          }
       }
       
-      if (localStorage[expirationKey(key)]) {
-        var expirationTime = parseInt(localStorage[expirationKey(key)]);
+      if (localStorage.getItem(expirationKey(key))) {
+        var expirationTime = parseInt(localStorage.getItem(expirationKey(key)));
         if (currentTime() > expirationTime) {
           localStorage.removeItem(key);
           localStorage.removeItem(expirationKey(key));
@@ -112,7 +113,7 @@ var lscache = function() {
         } else {
           return parsedStorage(key); 
         }
-      } else if (localStorage[key]) {
+      } else if (localStorage.getItem(key)) {
         return parsedStorage(key);
       }
       return null;
