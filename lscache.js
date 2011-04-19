@@ -48,7 +48,7 @@ var lscache = function() {
       try {
         localStorage.setItem(key, value);
       } catch (e) {
-        if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name == "NS_ERROR_DOM_QUOTA_REACHED") {
+        if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name == 'NS_ERROR_DOM_QUOTA_REACHED') {
           // If we exceeded the quota, then we will sort
           // by the expire time, and then remove the N oldest
           var storedKeys = [];
