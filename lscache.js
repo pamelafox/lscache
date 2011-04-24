@@ -14,7 +14,7 @@ var lscache = function() {
         } catch (e) {
           return false;
         }
-      },
+      }(),
 
       supportsJSON = ('JSON' in window) && window['JSON'] !== null;
   
