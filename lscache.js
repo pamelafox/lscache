@@ -1,15 +1,22 @@
 // Apache 2.0 license
 
 var lscache = function() {
-  var CACHESUFFIX = '-cacheexpiration';
-  
-  function supportsStorage() {
-    return ('localStorage' in window) && window['localStorage'] !== null;
-  }
-  
-  function supportsJSON() {
-    return ('JSON' in window) && window['JSON'] !== null;
-  }
+  var CACHESUFFIX = '-cacheexpiration',
+
+      // Cache the results of feature-detection instead of running
+      // the function every set/get operation.
+      //
+      // Feature detection method changed to address issues with
+      // Firefox 4 betas (see how Modernizr detects storage)
+      supportsStorage = function () {
+        try {
+          return !!localStorage.getItem;
+        } catch (e) {
+          return false;
+        }
+      }(),
+
+      supportsJSON = ('JSON' in window) && window['JSON'] !== null;
   
   function expirationKey(key) {
     return key + CACHESUFFIX;
@@ -29,13 +36,13 @@ var lscache = function() {
      * @param {number} time 
      */
     set: function(key, value, time) {
-      if (!supportsStorage()) return;
+      if (!supportsStorage) return;
       
       // If we don't get a string value, try to stringify
       // In future, localStorage may properly support storing non-strings
       // and this can be removed.
       if (typeof value != 'string') {
-        if (!supportsJSON()) return;
+        if (!supportsJSON) return;
         try {
           value = JSON.stringify(value);
         } catch (e) {
@@ -87,10 +94,10 @@ var lscache = function() {
      * @return {string|Object}
      */
     get: function(key) {
-      if (!supportsStorage()) return null;
+      if (!supportsStorage) return null;
       
       function parsedStorage(key) {
-         if (supportsJSON()) {
+         if (supportsJSON) {
            try {
              // We can't tell if its JSON or a string, so we try to parse
              var value = JSON.parse(localStorage.getItem(key));
@@ -125,7 +132,7 @@ var lscache = function() {
      * @param {string} key
      */
     remove: function(key) {
-      if (!supportsStorage()) return null;
+      if (!supportsStorage) return null;
       localStorage.removeItem(key);
       localStorage.removeItem(expirationKey(key));
     }
