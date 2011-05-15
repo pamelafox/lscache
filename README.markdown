@@ -6,7 +6,7 @@ and associate an expiration time with each piece of data. If the `localStorage` 
 Methods
 -------
 
-The library exposes the 3 methods: `set()`, `get()`, and `remove()`.
+The library exposes 3 methods: `set()`, `get()`, and `remove()`.
 
 * * *
 
