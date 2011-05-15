@@ -3,6 +3,31 @@ lscache
 This is a simple library that emulates `memcache` functions using HTML5 `localStorage`, so that you can cache data on the client
 and associate an expiration time with each piece of data. If the `localStorage` limit (~5MB) is exceeded, it tries to create space by removing the items that are closest to expiring anyway. If `localStorage` is not available at all in the browser, the library degrades by simply not caching and all cache requests return null.
 
+Methods
+-------
+
+The library exposes the following 3 methods:
+
+### lscache.set
+Stores the value in localStorage. Expires after specified number of minutes.
+#### Arguments
+1. `key` (**string**)
+2. `value` (**Object|string**)
+3. `time` (**number: optional**)
+
+### lscache.get
+Retrieves specified value from localStorage, if not expired.
+#### Arguments
+1. `key` (**string**)
+#### Returns
+**string | Object** : The stored value.
+
+### lscache.remove
+Removes a value from localStorage.
+#### Arguments
+1. `key` (**string**)
+
+
 Usage
 -------
 
