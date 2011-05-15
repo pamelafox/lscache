@@ -6,7 +6,9 @@ and associate an expiration time with each piece of data. If the `localStorage` 
 Methods
 -------
 
-The library exposes the following 3 methods:
+The library exposes the 3 methods: `set()`, `get()`, and `remove()`.
+
+* * *
 
 ### lscache.set
 Stores the value in localStorage. Expires after specified number of minutes.
@@ -15,12 +17,16 @@ Stores the value in localStorage. Expires after specified number of minutes.
 2. `value` (**Object|string**)
 3. `time` (**number: optional**)
 
+* * *
+
 ### lscache.get
 Retrieves specified value from localStorage, if not expired.
 #### Arguments
 1. `key` (**string**)
 #### Returns
 **string | Object** : The stored value.
+
+* * *
 
 ### lscache.remove
 Removes a value from localStorage.
