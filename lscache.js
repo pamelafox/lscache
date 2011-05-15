@@ -1,13 +1,31 @@
-// Apache 2.0 license
+/**
+ * lscache library
+ * Copyright (c) 2011, Pamela Fox
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+/**
+ * Creates a namespace for the lscache functions.
+ */
 var lscache = function() {
+  // Prefixes the key name on the expiration items in localStorage 
   var CACHESUFFIX = '-cacheexpiration';
 
-  // Cache the results of feature-detection instead of running
-  // the function every set/get operation.
-  //
-  // Feature detection method changed to address issues with
-  // Firefox 4 betas (see how Modernizr detects storage)
+  // Determines if localStorage is supported in the browser;
+  // result is cached for better performance instead of being run each time.
+  // Feature detection is based on how Modernizr does it;
+  // it's not straightforward due to FF4 issues.
   var supportsStorage = function () {
     try {
       return !!localStorage.getItem;
@@ -16,14 +34,23 @@ var lscache = function() {
     }
   }();
 
+  // Determines if native JSON (de-)serialization is supported in the browser.
   var supportsJSON = (window.JSON != null);
 
+  /**
+   * Returns the full string for the localStorage expiration item.
+   * @param {String} key
+   * @return {string}
+   */
   function expirationKey(key) {
     return key + CACHESUFFIX;
   }
 
+  /**
+   * Returns the number of minutes since the epoch.
+   * @return {number}
+   */
   function currentTime() {
-    // Get number of minutes since epoch
     return Math.floor((new Date().getTime())/60000);
   }
 
@@ -80,10 +107,11 @@ var lscache = function() {
         }
       }
 
+      // If a time is specified, store expiration info in localStorage
       if (time) {
         localStorage.setItem(expirationKey(key), currentTime() + time);
       } else {
-        // In case they set a time earlier, remove it.
+        // In case they set a time earlier, remove that info from localStorage.
         localStorage.removeItem(expirationKey(key));
       }
     },
@@ -96,6 +124,11 @@ var lscache = function() {
     get: function(key) {
       if (!supportsStorage) return null;
 
+      /**
+       * Tries to de-serialize stored value if its an object, and returns the
+       * normal value otherwise.
+       * @param {String} key
+       */
       function parsedStorage(key) {
          if (supportsJSON) {
            try {
@@ -111,8 +144,10 @@ var lscache = function() {
          }
       }
 
+      // Return the de-serialized item if not expired
       if (localStorage.getItem(expirationKey(key))) {
         var expirationTime = parseInt(localStorage.getItem(expirationKey(key)), 10);
+        // Check if we should actually kick item out of storage
         if (currentTime() >= expirationTime) {
           localStorage.removeItem(key);
           localStorage.removeItem(expirationKey(key));
