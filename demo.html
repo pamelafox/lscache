@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>lscache</title>
+  <style>
+body {
+  font-family: Arial, sans-serif;
+}
+
+textarea {
+  width: 400px;
+  height: 80px;
+}
+  </style>
+  <script src="lscache.js"></script>
+  <script>
+function run(id) {
+  var code = document.getElementById(id).value;
+  eval(code);
+}
+  </script>
+ </head>
+ <body>
+ 
+ <h1>lscache</h1>
+ 
+ <p>The lscache library is a simple library that emulates memcache functions using HTML5 localStorage, so that you can store items with an expiration date. These demos show its current functionality - set, get, remove.
+ </p>
+ 
+ <p><b>Set memcache entries (most with expiration of 2 minutes):</b><br>
+ (Check "Storage->Local Storage" in Chrome Dev Tools to see them stored.)
+ </p>
+ <textarea id="set">
+ lscache.set('forever', 'And Ever');
+ lscache.set('greeting', 'Hiii!', 2);
+ lscache.set('counter', 1, 2);
+ lscache.set('data', {'name': 'Pamela', 'age': 26}, 2);
+ </textarea>
+ <br>
+ <button onclick="run('set')">Run</button>
+ 
+ <br>
+ 
+ <p><b>Retrieve lscache entries:</b></p>
+ <textarea id="get">
+ console.log(lscache.get('forever'));
+ console.log(lscache.get('greeting'));
+ console.log(lscache.get('counter')+1);
+ console.log(lscache.get('data').name);
+ </textarea>
+ <br>
+ <button onclick="run('get')">Run</button>
+ 
+ <br>
+ 
+ <p><b>Delete lscache entries and try to retrieve them:</b></p>
+ <textarea id="delete">
+ lscache.remove('forever')
+ lscache.remove('greeting');
+ lscache.remove('counter');
+ lscache.remove('data');
+ console.log(lscache.get('greeting'));
+ </textarea>
+ <br>
+ <button onclick="run('delete')">Run</button>
+ 
+ <div id="result">
+ </div>
+ 
+ <br>
+ 
+ </body>
+</html>

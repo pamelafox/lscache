@@ -39,7 +39,7 @@ alert(lscache.get('data').name);
 ```
 
 For more live examples, play around with the demo here:
-http://pamelafox.github.com/lscache/lscache_demo.html
+http://pamelafox.github.com/lscache/demo.html
 
 
 Real-World Usage
