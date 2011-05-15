@@ -9,28 +9,33 @@ Usage
 The interface should be familiar to those of you who have used `memcache`, and should be easy to understand for those of you who haven't.
 
 For example, you can store a string for 2 seconds using `lscache.set()`:
+
 ```js
-lscache.set('greeting', 'Hello World!', 2);`
+lscache.set('greeting', 'Hello World!', 2);
 ```
 
 You can then retrieve that string with `lscache.get()`:
+
 ```js
-alert(lscache.get('greeting'));`
+alert(lscache.get('greeting'));
 ```
 
 You can remove that string from the cache entirely with `lscache.remove()`:
+
 ```js
-lscache.remove('greeting');`
+lscache.remove('greeting');
 ```
 
 The library also takes care of serializing objects, so you can store more complex data:
+
 ```js
-lscache.set('data', {'name': 'Pamela', 'age': 26}, 2);`
+lscache.set('data', {'name': 'Pamela', 'age': 26}, 2);
 ```
 
 And then when you retrieve it, you will get it back as an object:
+
 ```js
-alert(lscache.get('data').name);`
+alert(lscache.get('data').name);
 ```
 
 For more live examples, play around with the demo here:
