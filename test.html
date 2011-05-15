@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html>
+ <head>
+  <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
+  <script src="http://code.jquery.com/qunit/git/qunit.js"></script>
+  <script src="lscache.js"></script>
+  <script>
+test('Testing set() and get() with string', function() {
+  var key = 'thekey';
+  var value = 'thevalue'
+  lscache.set(key, value, 1); 
+  equals(lscache.get(key), value, 'We expect value to be ' + value);
+});
+
+test('Testing set() with non-string values', function() {
+  var key, value;
+
+  key = 'numberkey';
+  value = 2;
+  lscache.set(key, value, 3);
+  equals(lscache.get(key)+1, value+1, 'We expect incremented value to be ' + (value+1));
+
+  key = 'arraykey';
+  value = ['a', 'b', 'c'];
+  lscache.set(key, value, 3);
+  equals(lscache.get(key).length, value.length, 'We expect array to have length ' + value.length);
+
+  key = 'objectkey';
+  value = {'name': 'Pamela', 'age': 26};
+  lscache.set(key, value, 3);
+  equals(lscache.get(key).name, value.name, 'We expect name to be ' + value.name);
+});
+
+test('Testing remove()', function() {
+  var key = 'thekey';
+  lscache.set(key, 'bla', 2);
+  lscache.remove(key);
+  equals(lscache.get(key), null, 'We expect value to be null');
+});
+
+// We do this test last since it must wait 1 minute
+asyncTest('Testing set() and get() with string and expiration', 1, function() {
+  var key = 'thekey';
+  var value = 'thevalue'
+  var minutes = 1;
+  lscache.set(key, value, minutes); 
+  setTimeout(function() {
+    equals(lscache.get(key), null, 'We expect value to be null');
+    start();
+  }, 1000*60*minutes);
+});
+
+  </script>
+ </head>
+ <body>
+  <h1 id="qunit-header">QUnit example</h1>
+  <h2 id="qunit-banner"></h2>
+  <div id="qunit-testrunner-toolbar"></div>
+  <h2 id="qunit-userAgent"></h2>
+  <ol id="qunit-tests"></ol>
+  <div id="qunit-fixture">test markup, will be hidden</div>
+ </body>
+</html>
