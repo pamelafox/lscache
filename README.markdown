@@ -11,7 +11,7 @@ The library exposes 3 methods: `set()`, `get()`, and `remove()`.
 * * *
 
 ### lscache.set
-Stores the value in localStorage. Expires after specified number of minutes.
+Stores the value in localStorage. Expires after specified number of seconds.
 #### Arguments
 1. `key` (**string**)
 2. `value` (**Object|string**)
