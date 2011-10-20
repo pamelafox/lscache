@@ -11,7 +11,7 @@ The library exposes 3 methods: `set()`, `get()`, and `remove()`.
 * * *
 
 ### lscache.set
-Stores the value in localStorage. Expires after specified number of seconds.
+Stores the value in localStorage. Expires after specified number of minutes.
 #### Arguments
 1. `key` (**string**)
 2. `value` (**Object|string**)
@@ -39,7 +39,7 @@ Usage
 
 The interface should be familiar to those of you who have used `memcache`, and should be easy to understand for those of you who haven't.
 
-For example, you can store a string for 2 seconds using `lscache.set()`:
+For example, you can store a string for 2 minutes using `lscache.set()`:
 
 ```js
 lscache.set('greeting', 'Hello World!', 2);
