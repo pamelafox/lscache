@@ -101,7 +101,7 @@ function fetchJSON() {
   }
   JSONP.get(searchUrl, params, null, function(json) {
     processJSON(json);
-    lscache.set(key, json, 60*10);
+    lscache.set(key, json, 10);
   });
 }
 ```
