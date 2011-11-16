@@ -19,8 +19,10 @@
  * Creates a namespace for the lscache functions.
  */
 var lscache = function() {
-  // Prefixes the key name on the expiration items in localStorage 
-  var CACHESUFFIX = '-cacheexpiration';
+  // Suffixes the key name on the expiration items in localStorage 
+  // shortened to help save space
+  var CACHESUFFIX = '-EXP',
+      TOUCHEDSUFFIX = '-LRU';
 
   // Determines if localStorage is supported in the browser;
   // result is cached for better performance instead of being run each time.
@@ -45,6 +47,15 @@ var lscache = function() {
   function expirationKey(key) {
     return key + CACHESUFFIX;
   }
+  
+  /**
+   * Returns the full string for the localStorage last access item
+   * @param {String} key
+   * @return {string}
+   */
+  function touchedKey(key) {
+    return key + TOUCHEDSUFFIX;
+  }
 
   /**
    * Returns the number of minutes since the epoch.
@@ -52,6 +63,86 @@ var lscache = function() {
    */
   function currentTime() {
     return Math.floor((new Date().getTime())/60000);
+  }
+  
+  function attemptStorage(key, value, time) {
+    var purgeSize = 1,
+        sorted = false,
+        firstTry = true,
+        storedKeys = [],
+        storedKey,
+        removeItem;
+    
+    // start the retry loop until we can store
+    retryLoop();
+    
+    function retryLoop() {
+      try {
+        // store into the touchedKey first. This way, if we overflow, we always
+        // have the smallest units for reduction
+        localStorage.setItem(touchedKey(key), currentTime());
+        
+        if (time > 0) {
+          // if time is set, then add an expires key
+          localStorage.setItem(expirationKey(key), currentTime() + time);
+          localStorage.setItem(key, value);
+        }
+        else if (time < 0 || time === 0) {
+          // if time is in the past or explictly 0, it's auto-expired
+          // remove the key and return
+          localStorage.removeItem(touchedKey(key));
+          localStorage.removeItem(expirationKey(key));
+          localStorage.removeItem(key);
+          return;
+        }
+        else {
+          // no time is set, it was a "forever" setting
+          localStorage.setItem(key, value);
+        }
+      }
+      catch(e) {
+        if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name == 'NS_ERROR_DOM_QUOTA_REACHED') {
+          // if we fail and there's nothing in localstorage, then
+          // there is simply too much trying to be stored
+          if (storedKeys.length === 0 && !firstTry) {
+            throw new Error("Object with size of "+(key.length + value.length)+" is too large for localStorage");
+          }
+          
+          // there is logic that happens only on the first failure through
+          if (firstTry) {
+            firstTry = false;
+          }
+          
+          // If we exceeded the quota, then we will sort
+          // by the expire time, and then remove the N oldest
+          if (!sorted) {
+            for (var i = 0, len = localStorage.length; i < len; i++) {
+              storedKey = localStorage.key(i);
+              if (storedKey.indexOf(TOUCHEDSUFFIX) > -1) {
+                var mainKey = storedKey.split(TOUCHEDSUFFIX)[0];
+                storedKeys.push({key: mainKey, touched: parseInt(localStorage[storedKey], 10)});
+              }
+            }
+            storedKeys.sort(function(a, b) { return (a.touched-b.touched); });
+          }
+          
+          // LRU
+          removeItem = storedKeys.shift();
+          if (removeItem) {
+            localStorage.removeItem(touchedKey(removeItem.key));
+            localStorage.removeItem(expirationKey(removeItem.key));
+            localStorage.removeItem(removeItem.key);
+          }
+          
+          // try again (currently recursive)
+          retryLoop();
+        }
+        else {
+          // this was some other error. Give up
+          return;
+        }
+      }
+    }
   }
 
   return {
@@ -79,41 +170,7 @@ var lscache = function() {
         }
       }
 
-      try {
-        localStorage.setItem(key, value);
-      } catch (e) {
-        if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name == 'NS_ERROR_DOM_QUOTA_REACHED') {
-          // If we exceeded the quota, then we will sort
-          // by the expire time, and then remove the N oldest
-          var storedKey, storedKeys = [];
-          for (var i = 0; i < localStorage.length; i++) {
-            storedKey = localStorage.key(i);
-            if (storedKey.indexOf(CACHESUFFIX) > -1) {
-              var mainKey = storedKey.split(CACHESUFFIX)[0];
-              storedKeys.push({key: mainKey, expiration: parseInt(localStorage[storedKey], 10)});
-            }
-          }
-          storedKeys.sort(function(a, b) { return (a.expiration-b.expiration); });
-
-          for (var i = 0, len = Math.min(30, storedKeys.length); i < len; i++) {
-            localStorage.removeItem(storedKeys[i].key);
-            localStorage.removeItem(expirationKey(storedKeys[i].key));
-          }
-          // TODO: This could still error if the items we removed were small and this is large
-          localStorage.setItem(key, value);
-        } else {
-          // If it was some other error, just give up.
-          return;
-        }
-      }
-
-      // If a time is specified, store expiration info in localStorage
-      if (time) {
-        localStorage.setItem(expirationKey(key), currentTime() + time);
-      } else {
-        // In case they set a time earlier, remove that info from localStorage.
-        localStorage.removeItem(expirationKey(key));
-      }
+      attemptStorage(key, value, time);
     },
 
     /**
@@ -151,11 +208,14 @@ var lscache = function() {
         if (currentTime() >= expirationTime) {
           localStorage.removeItem(key);
           localStorage.removeItem(expirationKey(key));
+          localStorage.removeItem(touchedKey(key));
           return null;
         } else {
+          localStorage.setItem(touchedKey(key), currentTime());
           return parsedStorage(key);
         }
       } else if (localStorage.getItem(key)) {
+        localStorage.setItem(touchedKey(key), currentTime());
         return parsedStorage(key);
       }
       return null;
@@ -170,6 +230,7 @@ var lscache = function() {
       if (!supportsStorage) return null;
       localStorage.removeItem(key);
       localStorage.removeItem(expirationKey(key));
+      localStorage.removeItem(touchedKey(key));
     }
   };
 }();
