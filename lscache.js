@@ -103,12 +103,16 @@ var lscache = function() {
       catch(e) {
         if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name == 'NS_ERROR_DOM_QUOTA_REACHED') {
           // if we fail and there's nothing in localstorage, then
-          // there is simply too much trying to be stored
+          // there is simply too much trying to be stored (> 5mb) and we fail it quietly
           if (storedKeys.length === 0 && !firstTry) {
-            throw new Error("Object with size of "+(key.length + value.length)+" is too large for localStorage");
+            localStorage.removeItem(touchedKey(key));
+            localStorage.removeItem(expirationKey(key));
+            localStorage.removeItem(key);
+            return false;
           }
           
-          // there is logic that happens only on the first failure through
+          // firstTry logic ensures we don't test for size conditions
+          // until the second+ time through
           if (firstTry) {
             firstTry = false;
           }
