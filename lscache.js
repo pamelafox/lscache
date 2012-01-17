@@ -18,7 +18,7 @@
 /**
  * Creates a namespace for the lscache functions.
  */
-var lscache = function() {
+var lscache = (function() {
   'use strict';
 
   // Suffix for the key name on the expiration items in localStorage 
@@ -34,7 +34,7 @@ var lscache = function() {
   // result is cached for better performance instead of being run each time.
   // Feature detection is based on how Modernizr does it;
   // it's not straightforward due to FF4 issues.
-  var supportsStorage = (function(){
+  var supportsStorage = (function() {
     try {
       return !!localStorage.getItem;
     } catch (e) {
@@ -74,8 +74,6 @@ var lscache = function() {
       if (!supportsStorage) { return; }
 
       // If we don't get a string value, try to stringify
-      // In future, localStorage may properly support storing non-strings
-      // and this can be removed.
       if (typeof value !== 'string') {
         if (!supportsJSON) { return; }
 
@@ -97,16 +95,17 @@ var lscache = function() {
           var storedKey, storedKeys = [];
           for (var i = 0, len = localStorage.length; i < len; i++) {
             storedKey = localStorage.key(i);
-            if (storedKey.indexOf(CACHESUFFIX) >= 0) {
-              var mainKey = storedKey.split(CACHESUFFIX)[0];
+            var suffix = storedKey.indexOf(CACHESUFFIX);
+            if (suffix >= 0) {
+              var mainKey = storedKey.substr(0, suffix);
               storedKeys.push({
                 key: mainKey,
                 size: (localStorage[mainKey]||'').length,
-                expiration: parseInt(localStorage[storedKey], EXPIRY_BASE)
+                expr: parseInt(localStorage[storedKey], EXPIRY_BASE)
               });
             }
           }
-          storedKeys.sort(function(a, b) { return (a.expiration-b.expiration); });
+          storedKeys.sort(function(a, b) { return (a.expr-b.expr); });
 
           var targetSize = (value||'').length;
           while (storedKeys.length && targetSize > 0) {
@@ -181,9 +180,9 @@ var lscache = function() {
      * @param {string} key
      */
     remove: function(key) {
-      if (!supportsStorage) { return null; }
+      if (!supportsStorage) { return; }
       localStorage.removeItem(key);
       localStorage.removeItem(expirationKey(key));
     }
   };
-}();
+})();
