@@ -132,41 +132,34 @@ var lscache = function() {
     get: function(key) {
       if (!supportsStorage) { return null; }
 
-      /**
-       * Tries to de-serialize stored value if its an object, and returns the
-       * normal value otherwise.
-       * @param {String} key
-       */
-      function parsedStorage(key) {
-        if (supportsJSON) {
-          try {
-             // We can't tell if its JSON or a string, so we try to parse
-             var value = JSON.parse(localStorage.getItem(key));
-             return value;
-          } catch(e) {
-             // If we can't parse, it's probably because it isn't an object
-             return localStorage.getItem(key);
-          }
-        } else {
-          return localStorage.getItem(key);
-        }
-      }
-
       // Return the de-serialized item if not expired
-      if (localStorage.getItem(expirationKey(key))) {
-        var expirationTime = parseInt(localStorage.getItem(expirationKey(key)), EXPIRY_BASE);
+      var expr_key = expirationKey(key),
+          expr = localStorage.getItem(expr_key);
+
+      if (expr) {
+        var expirationTime = parseInt(expr, EXPIRY_BASE);
+
         // Check if we should actually kick item out of storage
         if (currentTime() >= expirationTime) {
           localStorage.removeItem(key);
-          localStorage.removeItem(expirationKey(key));
+          localStorage.removeItem(expr_key);
           return null;
-        } else {
-          return parsedStorage(key);
         }
-      } else if (localStorage.getItem(key)) {
-        return parsedStorage(key);
       }
-      return null;
+
+      // Tries to de-serialize stored value if its an object, and returns the normal value otherwise.
+      var value = localStorage.getItem(key);
+      if (!value || !supportsJSON) {
+        return value;
+      }
+
+      try {
+        // We can't tell if its JSON or a string, so we try to parse
+        return JSON.parse(value);
+      } catch(e) {
+        // If we can't parse, it's probably because it isn't an object
+        return value;
+      }
     },
 
     /**
