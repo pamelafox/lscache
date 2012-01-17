@@ -21,8 +21,14 @@
 var lscache = function() {
   'use strict';
 
-  // Suffixes the key name on the expiration items in localStorage 
+  // Suffix for the key name on the expiration items in localStorage 
   var CACHESUFFIX = '-cacheexpiration';
+
+  // expiration date base (store as Base-36 for space savings)
+  var EXPIRY_BASE = 10;
+
+  // time resolution in seconds
+  var EXPIRY_UNITS = 60 * 1000;
 
   // Determines if localStorage is supported in the browser;
   // result is cached for better performance instead of being run each time.
@@ -53,7 +59,7 @@ var lscache = function() {
    * @return {number}
    */
   function currentTime() {
-    return Math.floor((new Date().getTime())/60000);
+    return Math.floor((new Date().getTime())/EXPIRY_UNITS);
   }
 
   return {
@@ -90,9 +96,9 @@ var lscache = function() {
           var storedKey, storedKeys = [];
           for (var i = 0, len = localStorage.length; i < len; i++) {
             storedKey = localStorage.key(i);
-            if (storedKey.indexOf(CACHESUFFIX) > -1) {
+            if (storedKey.indexOf(CACHESUFFIX) >= 0) {
               var mainKey = storedKey.split(CACHESUFFIX)[0];
-              storedKeys.push({key: mainKey, expiration: parseInt(localStorage[storedKey], 10)});
+              storedKeys.push({key: mainKey, expiration: parseInt(localStorage[storedKey], EXPIRY_BASE)});
             }
           }
           storedKeys.sort(function(a, b) { return (a.expiration-b.expiration); });
@@ -111,9 +117,9 @@ var lscache = function() {
 
       // If a time is specified, store expiration info in localStorage
       if (time) {
-        localStorage.setItem(expirationKey(key), currentTime() + time);
+        localStorage.setItem(expirationKey(key), (currentTime() + time).toString(EXPIRY_BASE));
       } else {
-        // In case they set a time earlier, remove that info from localStorage.
+        // In case they previously set a time, remove that info from localStorage.
         localStorage.removeItem(expirationKey(key));
       }
     },
@@ -148,7 +154,7 @@ var lscache = function() {
 
       // Return the de-serialized item if not expired
       if (localStorage.getItem(expirationKey(key))) {
-        var expirationTime = parseInt(localStorage.getItem(expirationKey(key)), 10);
+        var expirationTime = parseInt(localStorage.getItem(expirationKey(key)), EXPIRY_BASE);
         // Check if we should actually kick item out of storage
         if (currentTime() >= expirationTime) {
           localStorage.removeItem(key);
