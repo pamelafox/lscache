@@ -27,7 +27,7 @@ var lscache = function() {
   // expiration date base (store as Base-36 for space savings)
   var EXPIRY_BASE = 10;
 
-  // time resolution in seconds
+  // time resolution in minutes
   var EXPIRY_UNITS = 60 * 1000;
 
   // Determines if localStorage is supported in the browser;
@@ -78,6 +78,7 @@ var lscache = function() {
       // and this can be removed.
       if (typeof value !== 'string') {
         if (!supportsJSON) { return; }
+
         try {
           value = JSON.stringify(value);
         } catch (e) {
@@ -98,17 +99,29 @@ var lscache = function() {
             storedKey = localStorage.key(i);
             if (storedKey.indexOf(CACHESUFFIX) >= 0) {
               var mainKey = storedKey.split(CACHESUFFIX)[0];
-              storedKeys.push({key: mainKey, expiration: parseInt(localStorage[storedKey], EXPIRY_BASE)});
+              storedKeys.push({
+                key: mainKey,
+                size: (localStorage[mainKey]||'').length,
+                expiration: parseInt(localStorage[storedKey], EXPIRY_BASE)
+              });
             }
           }
           storedKeys.sort(function(a, b) { return (a.expiration-b.expiration); });
 
-          for (i = 0, len = Math.min(30, storedKeys.length); i < len; i++) {
-            localStorage.removeItem(storedKeys[i].key);
-            localStorage.removeItem(expirationKey(storedKeys[i].key));
+          var targetSize = (value||'').length;
+          while (storedKeys.length && targetSize > 0) {
+            storedKey = storedKeys.pop();
+            localStorage.removeItem(storedKey.key);
+            localStorage.removeItem(expirationKey(storedKey.key));
+            targetSize -= storedKey.size;
           }
-          // TODO: This could still error if the items we removed were small and this is large
-          localStorage.setItem(key, value);
+
+          try {
+            localStorage.setItem(key, value);
+          } catch(e) {
+            // value may be larger than total quota
+            return;
+          }
         } else {
           // If it was some other error, just give up.
           return;
