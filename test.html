@@ -5,6 +5,11 @@
   <script src="http://code.jquery.com/qunit/git/qunit.js"></script>
   <script src="lscache.js"></script>
   <script>
+try {
+	// reset lscache before tests
+	localStorage.clear();
+} catch(e) {}
+  
 test('Testing set() and get() with string', function() {
   var key = 'thekey';
   var value = 'thevalue'
