@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+/*jshint undef:true, browser:true */
+
 /**
  * Creates a namespace for the lscache functions.
  */
@@ -22,20 +24,40 @@ var lscache = function() {
   // Prefixes the key name on the expiration items in localStorage 
   var CACHESUFFIX = '-cacheexpiration';
 
+  var cachedStorage;
+  var cachedJSON;
+
   // Determines if localStorage is supported in the browser;
   // result is cached for better performance instead of being run each time.
   // Feature detection is based on how Modernizr does it;
   // it's not straightforward due to FF4 issues.
-  var supportsStorage = function () {
-    try {
-      return !!localStorage.getItem;
-    } catch (e) {
-      return false;
+  // It's not run at parse-time as it takes 200ms in Android.
+  function supportsStorage() {
+    var key = '__lscachetest__';
+    var value = key;
+
+    if (cachedStorage !== undefined) {
+      return cachedStorage;
     }
-  }();
+
+    try {
+      setItem(key, value);
+      localStorage.removeItem(key);
+      cachedStorage = true;
+    } catch (exc) {
+      cachedStorage = false;
+    }
+    return cachedStorage;
+    }
 
   // Determines if native JSON (de-)serialization is supported in the browser.
-  var supportsJSON = (window.JSON != null);
+  function supportsJSON() {
+    /*jshint eqnull:true */
+    if (cachedJSON === undefined) {
+      cachedJSON = (window.JSON != null);
+    }
+    return cachedJSON;
+  }
 
   /**
    * Returns the full string for the localStorage expiration item.
@@ -54,6 +76,14 @@ var lscache = function() {
     return Math.floor((new Date().getTime())/60000);
   }
 
+  /**
+   * Wrapper function for iPad issue - sometimes throws QUOTA_EXCEEDED_ERR on setItem.
+   */
+  function setItem(key, value) {
+    localStorage.removeItem(key);
+    localStorage.setItem(key, value);
+  }
+
   return {
 
     /**
@@ -63,13 +93,13 @@ var lscache = function() {
      * @param {number} time
      */
     set: function(key, value, time) {
-      if (!supportsStorage) return;
+      if (!supportsStorage()) return;
 
       // If we don't get a string value, try to stringify
       // In future, localStorage may properly support storing non-strings
       // and this can be removed.
       if (typeof value != 'string') {
-        if (!supportsJSON) return;
+        if (!supportsJSON()) return;
         try {
           value = JSON.stringify(value);
         } catch (e) {
@@ -80,12 +110,13 @@ var lscache = function() {
       }
 
       try {
-        localStorage.setItem(key, value);
+        setItem(key, value);
       } catch (e) {
         if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name == 'NS_ERROR_DOM_QUOTA_REACHED') {
           // If we exceeded the quota, then we will sort
           // by the expire time, and then remove the N oldest
           var storedKeys = [];
+          var storedKey;
           for (var i = 0; i < localStorage.length; i++) {
             storedKey = localStorage.key(i);
             if (storedKey.indexOf(CACHESUFFIX) > -1) {
@@ -95,12 +126,13 @@ var lscache = function() {
           }
           storedKeys.sort(function(a, b) { return (a.expiration-b.expiration); });
 
-          for (var i = 0, len = Math.min(30, storedKeys.length); i < len; i++) {
+          var len = Math.min(30, storedKeys.length);
+          for (i = 0; i < len; i++) {
             localStorage.removeItem(storedKeys[i].key);
             localStorage.removeItem(expirationKey(storedKeys[i].key));
           }
           // TODO: This could still error if the items we removed were small and this is large
-          localStorage.setItem(key, value);
+          setItem(key, value);
         } else {
           // If it was some other error, just give up.
           return;
@@ -109,7 +141,7 @@ var lscache = function() {
 
       // If a time is specified, store expiration info in localStorage
       if (time) {
-        localStorage.setItem(expirationKey(key), currentTime() + time);
+        setItem(expirationKey(key), currentTime() + time);
       } else {
         // In case they set a time earlier, remove that info from localStorage.
         localStorage.removeItem(expirationKey(key));
@@ -122,7 +154,7 @@ var lscache = function() {
      * @return {string|Object}
      */
     get: function(key) {
-      if (!supportsStorage) return null;
+      if (!supportsStorage()) return null;
 
       /**
        * Tries to de-serialize stored value if its an object, and returns the
@@ -130,7 +162,7 @@ var lscache = function() {
        * @param {String} key
        */
       function parsedStorage(key) {
-         if (supportsJSON) {
+         if (supportsJSON()) {
            try {
              // We can't tell if its JSON or a string, so we try to parse
              var value = JSON.parse(localStorage.getItem(key));
@@ -167,7 +199,7 @@ var lscache = function() {
      * @param {string} key
      */
     remove: function(key) {
-      if (!supportsStorage) return null;
+      if (!supportsStorage()) return null;
       localStorage.removeItem(key);
       localStorage.removeItem(expirationKey(key));
     }
