@@ -39,7 +39,7 @@ Usage
 
 The interface should be familiar to those of you who have used `memcache`, and should be easy to understand for those of you who haven't.
 
-For example, you can store a string for 2 seconds using `lscache.set()`:
+For example, you can store a string for 2 minutes using `lscache.set()`:
 
 ```js
 lscache.set('greeting', 'Hello World!', 2);
@@ -101,7 +101,7 @@ function fetchJSON() {
   }
   JSONP.get(searchUrl, params, null, function(json) {
     processJSON(json);
-    lscache.set(key, json, 60*10);
+    lscache.set(key, json, 10);
   });
 }
 ```
