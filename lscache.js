@@ -21,7 +21,7 @@
  * Creates a namespace for the lscache functions.
  */
 var lscache = function() {
-  // Prefixes the key name on the expiration items in localStorage 
+  // Prefixes the key name on the expiration items in localStorage
   var CACHESUFFIX = '-cacheexpiration';
 
   var cachedStorage;
