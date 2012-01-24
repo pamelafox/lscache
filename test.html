@@ -5,10 +5,20 @@
   <script src="qunit.js"></script>
   <script src="lscache.js"></script>
   <script>
-// Reset localStorage before tests
-try {
-  localStorage.clear();
-} catch(e) {}
+module('lscache', {
+  setup: function() {
+    // Reset localStorage before each test
+    try {
+      localStorage.clear();
+    } catch(e) {}
+  },
+  teardown: function() {
+    // Reset localStorage after each test
+    try {
+      localStorage.clear();
+    } catch(e) {}
+  }
+});
 
 test('Testing set() and get() with string', function() {
   var key = 'thekey';
