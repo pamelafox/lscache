@@ -2,14 +2,14 @@
 <html>
  <head>
   <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
-  <script src="http://code.jquery.com/qunit/git/qunit.js"></script>
+  <script src="qunit.js"></script>
   <script src="lscache.js"></script>
   <script>
+// Reset localStorage before tests
 try {
-	// reset lscache before tests
-	localStorage.clear();
+  localStorage.clear();
 } catch(e) {}
-  
+
 test('Testing set() and get() with string', function() {
   var key = 'thekey';
   var value = 'thevalue'
@@ -41,6 +41,51 @@ test('Testing remove()', function() {
   lscache.set(key, 'bla', 2);
   lscache.remove(key);
   equals(lscache.get(key), null, 'We expect value to be null');
+});
+
+test('Testing quota exceeding', function() {
+  var key = 'thekey';
+
+  // Figure out this browser's localStorage limit -
+  // Chrome is around 2.6 mil, for example
+  var stringLength = 10000;
+  var longString = (new Array(stringLength+1)).join('s');
+  var num = 0;
+  while(num < 10000) {
+    try {
+      localStorage.setItem(key + num, longString);
+      num++;
+    } catch (e) {
+      break;
+    }
+  }
+  localStorage.clear();
+  // Now add enough to go over the limit
+  var approxLimit = num * stringLength;
+  var numKeys = Math.ceil(approxLimit/(stringLength+8)) + 1;
+  for (var i = 0; i <= numKeys; i++) {
+    var currentKey = key + i;
+    lscache.set(currentKey, longString, i+1);
+  }
+  // Test that last-to-expire is still there
+  equals(lscache.get(currentKey), longString, 'We expect newest value to still be there');
+  // Test that the first-to-expire is kicked out
+  equals(lscache.get(key + '0'), null, 'We expect oldest value to be kicked out (null)');
+
+  // Test trying to add something thats bigger than previous items,
+  // check that it is successfully added (requires removal of multiple keys)
+  var veryLongString = longString + longString;
+  lscache.set(key + 'long', veryLongString, i+1);
+  equals(lscache.get(key + 'long'), veryLongString, 'We expect long string to get stored');
+
+  // Try the same with no expiry times
+  localStorage.clear();
+  for (var i = 0; i <= numKeys; i++) {
+    var currentKey = key + i;
+    lscache.set(currentKey, longString);
+  }
+  // Test that latest added is still there
+  equals(lscache.get(currentKey), longString, 'We expect value to be set');
 });
 
 // We do this test last since it must wait 1 minute
