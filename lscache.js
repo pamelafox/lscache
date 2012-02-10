@@ -52,7 +52,7 @@ var lscache = function() {
 
     try {
       setItem(key, value);
-      localStorage.removeItem(key);
+      removeItem(key);
       cachedStorage = true;
     } catch (exc) {
       cachedStorage = false;
@@ -118,7 +118,7 @@ var lscache = function() {
       // If we don't get a string value, try to stringify
       // In future, localStorage may properly support storing non-strings
       // and this can be removed.
-      if (typeof value != 'string') {
+      if (typeof value !== 'string') {
         if (!supportsJSON()) return;
         try {
           value = JSON.stringify(value);
@@ -132,7 +132,7 @@ var lscache = function() {
       try {
         setItem(key, value);
       } catch (e) {
-        if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name == 'NS_ERROR_DOM_QUOTA_REACHED') {
+        if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
           // If we exceeded the quota, then we will sort
           // by the expire time, and then remove the N oldest
           var storedKeys = [];
@@ -152,7 +152,7 @@ var lscache = function() {
               }
               storedKeys.push({
                 key: mainKey,
-                size: (getItem(mainKey)).length,
+                size: (getItem(mainKey)||'').length,
                 expiration: expiration
               });
             }
@@ -164,7 +164,7 @@ var lscache = function() {
           while (storedKeys.length && targetSize > 0) {
             storedKey = storedKeys.pop();
             removeItem(storedKey.key);
-            removeItem(expirationKey(storedKey).key);
+            removeItem(expirationKey(storedKey.key));
             targetSize -= storedKey.size;
           }
           try {
@@ -195,26 +195,6 @@ var lscache = function() {
      */
     get: function(key) {
       if (!supportsStorage()) return null;
-
-      /**
-       * Tries to de-serialize stored value if its an object, and returns the
-       * normal value otherwise.
-       * @param {String} key
-       */
-      function parsedStorage(key) {
-         if (supportsJSON()) {
-           try {
-             // We can't tell if its JSON or a string, so we try to parse
-             var value = JSON.parse(getItem(key));
-             return value;
-           } catch(e) {
-             // If we can't parse, it's probably because it isn't an object
-             return getItem(key);
-           }
-         } else {
-           return getItem(key);
-         }
-      }
 
       // Return the de-serialized item if not expired
       var exprKey = expirationKey(key);
@@ -255,6 +235,15 @@ var lscache = function() {
       if (!supportsStorage()) return null;
       removeItem(key);
       removeItem(expirationKey(key));
+    },
+
+    /**
+     * Returns whether local storage is supported.
+     * Currently exposed for testing purposes.
+     * @return {boolean}
+     */
+    supported: function() {
+      return supportsStorage();
     }
   };
 }();
