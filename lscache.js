@@ -61,7 +61,7 @@ var lscache = function() {
       cachedStorage = false;
     }
     return cachedStorage;
-    }
+  }
 
   // Determines if native JSON (de-)serialization is supported in the browser.
   function supportsJSON() {
@@ -258,9 +258,9 @@ var lscache = function() {
       // Loop in reverse as removing items will change indices of tail
       for (var i = localStorage.length-1; i >= 0 ; --i) {
         var key = localStorage.key(i);
-          if (key.indexOf(CACHE_PREFIX) === 0) {
-            localStorage.removeItem(key);
-          }
+        if (key.indexOf(CACHE_PREFIX) === 0) {
+          localStorage.removeItem(key);
+        }
       }
     }
   };
