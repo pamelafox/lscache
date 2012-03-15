@@ -23,9 +23,15 @@ module('lscache', {
 test('Testing set() and get() with string', function() {
   var key = 'thekey';
   var value = 'thevalue'
-  lscache.set(key, value, 1); 
-  equals(lscache.get(key), value, 'We expect value to be ' + value);
+  lscache.set(key, value, 1);
+  if (lscache.supported()) {
+    equals(lscache.get(key), value, 'We expect value to be ' + value);
+  } else {
+    equals(lscache.get(key), null, 'We expect null value');
+  }
 });
+
+if (lscache.supported()) {
 
 test('Testing set() with non-string values', function() {
   var key, value;
@@ -100,20 +106,23 @@ test('Testing quota exceeding', function() {
 
 // We do this test last since it must wait 1 minute
 asyncTest('Testing set() and get() with string and expiration', 1, function() {
+
   var key = 'thekey';
   var value = 'thevalue'
   var minutes = 1;
-  lscache.set(key, value, minutes); 
+  lscache.set(key, value, minutes);
   setTimeout(function() {
     equals(lscache.get(key), null, 'We expect value to be null');
     start();
   }, 1000*60*minutes);
 });
 
+}
+
   </script>
  </head>
  <body>
-  <h1 id="qunit-header">QUnit example</h1>
+  <h1 id="qunit-header">QUnit lscache tests</h1>
   <h2 id="qunit-banner"></h2>
   <div id="qunit-testrunner-toolbar"></div>
   <h2 id="qunit-userAgent"></h2>

@@ -235,6 +235,15 @@ var lscache = function() {
       if (!supportsStorage()) return null;
       removeItem(key);
       removeItem(expirationKey(key));
+    },
+
+    /**
+     * Returns whether local storage is supported.
+     * Currently exposed for testing purposes.
+     * @return {boolean}
+     */
+    supported: function() {
+      return supportsStorage();
     }
   };
 }();
