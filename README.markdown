@@ -6,7 +6,7 @@ and associate an expiration time with each piece of data. If the `localStorage` 
 Methods
 -------
 
-The library exposes 3 methods: `set()`, `get()`, and `remove()`.
+The library exposes 4 methods: `set()`, `get()`, `remove()`, and `flush()`.
 
 * * *
 
@@ -33,6 +33,11 @@ Removes a value from localStorage.
 #### Arguments
 1. `key` (**string**)
 
+* * *
+
+### lscache.flush
+Removes all lscache items from localStorage without affecting other data.
+
 
 Usage
 -------
@@ -55,6 +60,12 @@ You can remove that string from the cache entirely with `lscache.remove()`:
 
 ```js
 lscache.remove('greeting');
+```
+
+You can remove all items from the cache entirely with `lscache.flush()`:
+
+```js
+lscache.flush();
 ```
 
 The library also takes care of serializing objects, so you can store more complex data:

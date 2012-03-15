@@ -59,6 +59,15 @@ test('Testing remove()', function() {
   equals(lscache.get(key), null, 'We expect value to be null');
 });
 
+test('Testing flush()', function() {
+  localStorage.setItem('outside-cache', 'not part of lscache');
+  var key = 'thekey';
+  lscache.set(key, 'bla', 100);
+  lscache.flush();
+  equals(lscache.get(key), null, 'We expect flushed value to be null');
+  equals(localStorage.getItem('outside-cache'), 'not part of lscache', 'We expect localStorage value to still persist');
+});
+
 test('Testing quota exceeding', function() {
   var key = 'thekey';
 
