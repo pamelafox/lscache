@@ -87,6 +87,7 @@ alert(lscache.get('data').name);
 ```
 
 If you have multiple instances of lscache running on the same domain, you can partition data in a certain bucket via:
+
 ```js
 lscache.set('response', '...', 2);
 lscache.setBucket('lib');
