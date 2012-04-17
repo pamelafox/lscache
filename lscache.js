@@ -39,6 +39,7 @@ var lscache = function() {
 
   var cachedStorage;
   var cachedJSON;
+  var cacheBucket = '';
 
   // Determines if localStorage is supported in the browser;
   // result is cached for better performance instead of being run each time.
@@ -94,17 +95,17 @@ var lscache = function() {
    */
 
   function getItem(key) {
-    return localStorage.getItem(CACHE_PREFIX + key);
+    return localStorage.getItem(CACHE_PREFIX + cacheBucket + key);
   }
 
   function setItem(key, value) {
     // Fix for iPad issue - sometimes throws QUOTA_EXCEEDED_ERR on setItem.
-    localStorage.removeItem(CACHE_PREFIX + key);
-    localStorage.setItem(CACHE_PREFIX + key, value);
+    localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
+    localStorage.setItem(CACHE_PREFIX + cacheBucket + key, value);
   }
 
   function removeItem(key) {
-    localStorage.removeItem(CACHE_PREFIX + key);
+    localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
   }
 
   return {
@@ -143,8 +144,8 @@ var lscache = function() {
           for (var i = 0; i < localStorage.length; i++) {
             storedKey = localStorage.key(i);
 
-            if (storedKey.indexOf(CACHE_PREFIX) === 0 && storedKey.indexOf(CACHE_SUFFIX) < 0) {
-              var mainKey = storedKey.substr(CACHE_PREFIX.length);
+            if (storedKey.indexOf(CACHE_PREFIX + cacheBucket) === 0 && storedKey.indexOf(CACHE_SUFFIX) < 0) {
+              var mainKey = storedKey.substr((CACHE_PREFIX + cacheBucket).length);
               var exprKey = expirationKey(mainKey);
               var expiration = getItem(exprKey);
               if (expiration) {
@@ -258,10 +259,25 @@ var lscache = function() {
       // Loop in reverse as removing items will change indices of tail
       for (var i = localStorage.length-1; i >= 0 ; --i) {
         var key = localStorage.key(i);
-        if (key.indexOf(CACHE_PREFIX) === 0) {
+        if (key.indexOf(CACHE_PREFIX + cacheBucket) === 0) {
           localStorage.removeItem(key);
         }
       }
+    },
+    
+    /**
+     * Appends CACHE_PREFIX so lscache will partition data in to different buckets.
+     * @param {string} bucket
+     */
+    setBucket: function(bucket) {
+      cacheBucket = bucket;
+    },
+    
+    /**
+     * Resets the string being appended to CACHE_PREFIX so lscache will use the default storage behavior.
+     */
+    resetBucket: function() {
+      cacheBucket = '';
     }
   };
 }();
