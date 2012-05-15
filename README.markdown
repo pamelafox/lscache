@@ -38,6 +38,12 @@ Removes a value from localStorage.
 ### lscache.flush
 Removes all lscache items from localStorage without affecting other data.
 
+* * *
+
+### lscache.setBucket
+Appends CACHE_PREFIX so lscache will partition data in to different buckets
+#### Arguments
+1. `bucket` (**string**)
 
 Usage
 -------
@@ -78,6 +84,15 @@ And then when you retrieve it, you will get it back as an object:
 
 ```js
 alert(lscache.get('data').name);
+```
+
+If you have multiple instances of lscache running on the same domain, you can partition data in a certain bucket via:
+
+```js
+lscache.set('response', '...', 2);
+lscache.setBucket('lib');
+lscache.set('path', '...', 2);
+lscache.flush(); //only removes 'path' which was set in the lib bucket
 ```
 
 For more live examples, play around with the demo here:

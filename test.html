@@ -68,6 +68,23 @@ test('Testing flush()', function() {
   equals(localStorage.getItem('outside-cache'), 'not part of lscache', 'We expect localStorage value to still persist');
 });
 
+test('Testing setBucket()', function() {
+  var key = 'thekey';
+  var value1 = 'awesome';
+  var value2 = 'awesomer';
+  var bucketName = 'BUCKETONE';
+      
+  lscache.set(key, value1, 1);
+  lscache.setBucket(bucketName);
+  lscache.set(key, value2, 1);
+  
+  equals(lscache.get(key), value2, 'We expect "' + value2 + '" to be returned for the current bucket: ' + bucketName);
+  lscache.flush();
+  equals(lscache.get(key), null, 'We expect "' + value2 + '" to be flushed for the current bucket');
+  lscache.resetBucket();
+  equals(lscache.get(key), value1, 'We expect "' + value1 + '", the non-bucket value, to persist');
+});
+
 test('Testing quota exceeding', function() {
   var key = 'thekey';
 
@@ -117,11 +134,29 @@ test('Testing quota exceeding', function() {
 asyncTest('Testing set() and get() with string and expiration', 1, function() {
 
   var key = 'thekey';
-  var value = 'thevalue'
+  var value = 'thevalue';
   var minutes = 1;
   lscache.set(key, value, minutes);
   setTimeout(function() {
     equals(lscache.get(key), null, 'We expect value to be null');
+    start();
+  }, 1000*60*minutes);
+});
+
+asyncTest('Testing set() and get() with string and expiration in a different bucket', 2, function() {
+
+  var key = 'thekey';
+  var value1 = 'thevalue1';
+  var value2 = 'thevalue2';
+  var minutes = 1;
+  var bucket = 'newbucket';
+  lscache.set(key, value1, minutes * 2);
+  lscache.setBucket(bucket);
+  lscache.set(key, value2, minutes);
+  setTimeout(function() {
+    equals(lscache.get(key), null, 'We expect value to be null for the bucket: ' + bucket);
+    lscache.resetBucket();
+    equals(lscache.get(key), value1, 'We expect value to be ' + value1 + ' for the base bucket.');
     start();
   }, 1000*60*minutes);
 });
