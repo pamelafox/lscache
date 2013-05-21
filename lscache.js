@@ -40,6 +40,7 @@ var lscache = function() {
   var cachedStorage;
   var cachedJSON;
   var cacheBucket = '';
+  var warnings = false;
 
   // Determines if localStorage is supported in the browser;
   // result is cached for better performance instead of being run each time.
@@ -108,6 +109,13 @@ var lscache = function() {
     localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
   }
 
+  function warn(message, err) {
+    if (!warnings) return;
+    if (!'console' in window || typeof window.console.warn !== 'function') return;
+    window.console.warn("lscache - " + message);
+    if (err) window.console.warn("lscache - The error was: " + err.message);
+  }
+
   return {
 
     /**
@@ -167,6 +175,7 @@ var lscache = function() {
           var targetSize = (value||'').length;
           while (storedKeys.length && targetSize > 0) {
             storedKey = storedKeys.pop();
+            warn("Cache is full, removing item with key '" + key + "'");
             removeItem(storedKey.key);
             removeItem(expirationKey(storedKey.key));
             targetSize -= storedKey.size;
@@ -175,10 +184,12 @@ var lscache = function() {
             setItem(key, value);
           } catch (e) {
             // value may be larger than total quota
+            warn("Could not add item with key '" + key + "', perhaps it's too big?", e);
             return;
           }
         } else {
           // If it was some other error, just give up.
+          warn("Could not add item with key '" + key + "'", e);
           return;
         }
       }
@@ -264,7 +275,7 @@ var lscache = function() {
         }
       }
     },
-    
+
     /**
      * Appends CACHE_PREFIX so lscache will partition data in to different buckets.
      * @param {string} bucket
@@ -272,12 +283,19 @@ var lscache = function() {
     setBucket: function(bucket) {
       cacheBucket = bucket;
     },
-    
+
     /**
      * Resets the string being appended to CACHE_PREFIX so lscache will use the default storage behavior.
      */
     resetBucket: function() {
       cacheBucket = '';
+    },
+
+    /**
+     * Sets whether to display warnings when an item is removed from the cache or not.
+     */
+    enableWarnings: function(enabled) {
+      warnings = enabled;
     }
   };
 }();
