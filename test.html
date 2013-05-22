@@ -5,6 +5,7 @@
   <script src="qunit.js"></script>
   <script src="lscache.js"></script>
   <script>
+var originalConsole = window.console;
 module('lscache', {
   setup: function() {
     // Reset localStorage before each test
@@ -17,6 +18,8 @@ module('lscache', {
     try {
       localStorage.clear();
     } catch(e) {}
+    window.console = originalConsole;
+    lscache.enableWarnings(false);
   }
 });
 
@@ -73,16 +76,50 @@ test('Testing setBucket()', function() {
   var value1 = 'awesome';
   var value2 = 'awesomer';
   var bucketName = 'BUCKETONE';
-      
+
   lscache.set(key, value1, 1);
   lscache.setBucket(bucketName);
   lscache.set(key, value2, 1);
-  
+
   equals(lscache.get(key), value2, 'We expect "' + value2 + '" to be returned for the current bucket: ' + bucketName);
   lscache.flush();
   equals(lscache.get(key), null, 'We expect "' + value2 + '" to be flushed for the current bucket');
   lscache.resetBucket();
   equals(lscache.get(key), value1, 'We expect "' + value1 + '", the non-bucket value, to persist');
+});
+
+test('Testing setWarnings()', function() {
+  window.console = {
+    calls: 0,
+    warn: function() { this.calls++; }
+  };
+
+  var longString = (new Array(10000)).join('s');
+  var num = 0;
+  while(num < 10000) {
+    try {
+      localStorage.setItem("key" + num, longString);
+      num++;
+    } catch (e) {
+      break;
+    }
+  }
+  localStorage.clear()
+
+  for (var i = 0; i <= num; i++) {
+    lscache.set("key" + i, longString);
+  }
+
+  // Warnings not enabled, nothing should be logged
+  equals(window.console.calls, 0);
+
+  lscache.enableWarnings(true);
+
+  lscache.set("key" + i, longString);
+  equals(window.console.calls, 1, "We expect one warning to have been printed");
+
+  window.console = null;
+  lscache.set("key" + i, longString);
 });
 
 test('Testing quota exceeding', function() {
