@@ -25,6 +25,9 @@ var lscache = function() {
   // Prefix for all lscache keys
   var CACHE_PREFIX = 'lscache-';
 
+  // Default ttl if none specified
+  var DEFAULT_TIMEOUT = 60 * 1000 * 5 // 5 minutes
+
   // Suffix for the key name on the expiration items in localStorage
   var CACHE_SUFFIX = '-cacheexpiration';
 
@@ -195,11 +198,15 @@ var lscache = function() {
       }
 
       // If a time is specified, store expiration info in localStorage
-      if (time) {
+      // If time is set to 0, make ttl forever (by not setting one)
+      // If time is not set, use DEFAULT_TIMEOUT
+      if (time && time != 0) {
         setItem(expirationKey(key), (currentTime() + time).toString(EXPIRY_RADIX));
-      } else {
+      } else if (time === 0){
         // In case they previously set a time, remove that info from localStorage.
         removeItem(expirationKey(key));
+      } else {
+        setItem(expirationKey(key), (currentTime() + DEFAULT_TIMEOUT).toString(EXPIRY_RADIX));
       }
     },
 

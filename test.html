@@ -53,7 +53,27 @@ test('Testing set() with non-string values', function() {
   value = {'name': 'Pamela', 'age': 26};
   lscache.set(key, value, 3);
   equals(lscache.get(key).name, value.name, 'We expect name to be ' + value.name);
+
+
 });
+
+test('Testing set with default ttl and no ttl', function() {
+
+  var CACHE_SUFFIX = '-cacheexpiration';
+
+  // no ttl, should use default
+  key = 'defaultttlkey';
+  value = 7
+  lscache.set(key, value)
+  ok(lscache.get(key+CACHE_SUFFIX), 'Key has a time to live value');
+
+  // 0 ttl, should not store a ttl (forever ttl)
+  key = 'foreverttlkey';
+  value = 99
+  lscache.set(key, value, 0)
+  equals(lscache.get(key+CACHE_SUFFIX), undefined, 'Key does not have a time to live');
+});
+
 
 test('Testing remove()', function() {
   var key = 'thekey';
