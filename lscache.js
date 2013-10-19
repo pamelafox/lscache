@@ -201,14 +201,11 @@ var lscache = function() {
       // If time is set to 0, make ttl forever (by not setting one)
       // If time is not set, use DEFAULT_TIMEOUT
       if (time && time != 0) {
-        console.log('if then time : ', time)
         setItem(expirationKey(key), (currentTime() + time).toString(EXPIRY_RADIX));
       } else if (time === 0){
         // In case they previously set a time, remove that info from localStorage.
-        console.log('if then time 0 : ', time)
         removeItem(expirationKey(key));
       } else {
-        console.log('if then time : NONE ', time)
         setItem(expirationKey(key), (currentTime() + DEFAULT_TIMEOUT).toString(EXPIRY_RADIX));
       }
     },
