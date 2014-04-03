@@ -15,13 +15,16 @@
  * limitations under the License.
  */
 
-/*jshint undef:true, browser:true */
+/*jshint undef:true, browser:true, node:true */
 /*global define */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
         define([], factory);
+    } else if (typeof exports === 'object') {
+        // CommonJS
+        module.exports = factory();
     } else {
         // Browser globals
         root.lscache = factory();
