@@ -33,6 +33,12 @@ module.exports = function(grunt) {
           }
         }
       }
+    },
+    qunit: {
+      options: {
+        timeout: 60 * 1000 * 2
+      },
+      all: ['tests/*.html']
     }
   });
 
@@ -40,7 +46,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks("grunt-contrib-jshint");
   grunt.loadNpmTasks('grunt-bump');
   grunt.loadNpmTasks('grunt-browserify');
+  grunt.loadNpmTasks('grunt-contrib-qunit');
 
   grunt.registerTask("default", ["jshint", "uglify", "browserify"]);
+  grunt.registerTask("test", ["jshint", "uglify", "browserify", "qunit"]);
 
 };
