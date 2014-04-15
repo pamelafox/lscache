@@ -4,13 +4,15 @@
 	"homepage": "https://github.com/pamelafox/lscache",
 	"main": ["lscache.min.js", "lscache.js"],
 	"ignore": [
-		"tests/*",
-		"Gruntfile.js"
+		"demo",
+		"tests",
+		"Gruntfile.js",
+		"package.json"
 	],
 	"keywords": [
 		"localstorage",
 		"local",
-		"storage"
+		"storage",
 		"lscache"
 	]
 }
