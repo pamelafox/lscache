@@ -8,6 +8,7 @@
     "url": "https://github.com/pamelafox/lscache.git"
   },
   "homepage": "http://github.com/pamelafox/lscache",
+  "main": "lscache",
   "version": "1.0.1",
   "devDependencies": {
     "grunt": "~0.4.1",
