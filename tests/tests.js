@@ -200,6 +200,22 @@ var startTests = function (lscache) {
       }, 1000*60*minutes);
     });
 
+    asyncTest('Testing flush(expired)', function() {
+      localStorage.setItem('outside-cache', 'not part of lscache');
+      var unexpiredKey = 'unexpiredKey';
+      var expiredKey = 'expiredKey';
+      lscache.set(unexpiredKey, 'bla', 1);
+      lscache.set(expiredKey, 'blech', 1/60); // Expire after one second
+
+      setTimeout(function() {
+        lscache.flushExpired();
+        equal(lscache.get(unexpiredKey), 'bla', 'We expect unexpired value to survive flush');
+        equal(lscache.get(expiredKey), null, 'We expect expired value to be flushed');
+        equal(localStorage.getItem('outside-cache'), 'not part of lscache', 'We expect localStorage value to still persist');
+        start();
+      }, 1500);
+    });
+
   }
 
   if (QUnit.config.autostart === false) {

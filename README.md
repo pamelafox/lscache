@@ -74,6 +74,12 @@ You can remove all items from the cache entirely with `lscache.flush()`:
 lscache.flush();
 ```
 
+You can remove only expired items from the cache entirely with `lscache.flushExpired()`:
+
+```js
+lscache.flushExpired();
+```
+
 The library also takes care of serializing objects, so you can store more complex data:
 
 ```js
