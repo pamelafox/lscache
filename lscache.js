@@ -300,6 +300,17 @@
     },
 
     /**
+     * Allows to execute some operations in the context of a given bucket.
+     */
+    withBucket: function(bucket, fn) {
+      var currentBucket = cacheBucket;
+      cacheBucket = bucket;
+      var res = fn.call(this);
+      cacheBucket = currentBucket;
+      return res;
+    },
+
+    /**
      * Sets whether to display warnings when an item is removed from the cache or not.
      */
     enableWarnings: function(enabled) {

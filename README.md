@@ -6,7 +6,7 @@ and associate an expiration time with each piece of data. If the `localStorage` 
 Methods
 -------
 
-The library exposes 5 methods: `set()`, `get()`, `remove()`, `flush()`, and `setBucket()`.
+The library exposes 6 methods: `set()`, `get()`, `remove()`, `flush()`, `setBucket()`, and `withBucket()`.
 
 * * *
 
@@ -44,6 +44,14 @@ Removes all lscache items from localStorage without affecting other data.
 Appends CACHE_PREFIX so lscache will partition data in to different buckets
 #### Arguments
 1. `bucket` (**string**)
+
+* * *
+
+### lscache.withBucket
+Runs some operations in the context of given CACHE_PREFIX
+#### Arguments
+1. `bucket` (**string**)
+2. `fn` (**Function**)
 
 Usage
 -------

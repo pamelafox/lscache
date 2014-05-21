@@ -87,6 +87,24 @@ var startTests = function (lscache) {
       equal(lscache.get(key), value1, 'We expect "' + value1 + '", the non-bucket value, to persist');
     });
 
+    test('Testing withBucket()', function() {
+      var key = 'thekey';
+      var value1 = 'awesome';
+      var value2 = 'awesomer';
+      var bucketName = 'BUCKETONE';
+
+      lscache.set(key, value1, 1);
+      lscache.withBucket(bucketName, function() {
+        this.set(key, value2, 1);
+      });
+
+      equal(lscache.get(key), value1, 'We expect "' + value1 + '", the non-bucket value, to persist');
+      var value = lscache.withBucket(bucketName, function() {
+        return this.get(key);
+      });
+      equal(value, value2, 'We expect "' + value2 + '" to be returned for the current bucket: ' + bucketName);
+    });
+
     test('Testing setWarnings()', function() {
       window.console = {
         calls: 0,

@@ -301,6 +301,17 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     },
 
     /**
+     * Allows to execute some operations in the context of a given bucket.
+     */
+    withBucket: function(bucket, fn) {
+      var currentBucket = cacheBucket;
+      cacheBucket = bucket;
+      var res = fn.call(this);
+      cacheBucket = currentBucket;
+      return res;
+    },
+
+    /**
      * Sets whether to display warnings when an item is removed from the cache or not.
      */
     enableWarnings: function(enabled) {
@@ -311,6 +322,9 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   // Return the module
   return lscache;
 }));
+
+},{}],"qunit":[function(require,module,exports){
+module.exports=require('nCxwBE');
 },{}],"nCxwBE":[function(require,module,exports){
 (function (global){
 (function browserifyShim(module, exports, define, browserify_shim__define__module__export__) {
@@ -1931,8 +1945,6 @@ QUnit.diff = (function() {
 }).call(global, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"qunit":[function(require,module,exports){
-module.exports=require('nCxwBE');
 },{}],4:[function(require,module,exports){
 /* jshint undef:true, browser:true, node:true */
 /* global QUnit, test, equal, asyncTest, start, define */
@@ -2021,6 +2033,24 @@ var startTests = function (lscache) {
       equal(lscache.get(key), null, 'We expect "' + value2 + '" to be flushed for the current bucket');
       lscache.resetBucket();
       equal(lscache.get(key), value1, 'We expect "' + value1 + '", the non-bucket value, to persist');
+    });
+
+    test('Testing withBucket()', function() {
+      var key = 'thekey';
+      var value1 = 'awesome';
+      var value2 = 'awesomer';
+      var bucketName = 'BUCKETONE';
+
+      lscache.set(key, value1, 1);
+      lscache.withBucket(bucketName, function() {
+        this.set(key, value2, 1);
+      });
+
+      equal(lscache.get(key), value1, 'We expect "' + value1 + '", the non-bucket value, to persist');
+      var value = lscache.withBucket(bucketName, function() {
+        return this.get(key);
+      });
+      equal(value, value2, 'We expect "' + value2 + '" to be returned for the current bucket: ' + bucketName);
     });
 
     test('Testing setWarnings()', function() {
