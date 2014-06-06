@@ -212,14 +212,13 @@
     },
 
     /**
-     * Retrieves specified value from localStorage, if not expired.
+     * Checks whether a given key is expired
      * @param {string} key
-     * @return {string|Object}
+     * @return {Boolean}
      */
-    get: function(key) {
+    isExpired: function(key) {
       if (!supportsStorage()) return null;
 
-      // Return the de-serialized item if not expired
       var exprKey = expirationKey(key);
       var expr = getItem(exprKey);
 
@@ -228,14 +227,42 @@
 
         // Check if we should actually kick item out of storage
         if (currentTime() >= expirationTime) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+
+    /**
+     * Retrieves specified value from localStorage, if not expired.
+     * @param {string} key
+     * @param {boolean} skipRemove Don't remove the item if expired [Default: false]
+     * @param {boolean} allowExpr  Allow returning of expired values  [Default: false]
+     * @return {string|Object}
+     */
+    get: function(key, skipRemove, allowExpired) {
+      if (!supportsStorage()) return null;
+
+      var value;
+
+      skipRemove = (skipRemove === true);  // Default false
+      allowExpired = (allowExpired === true); // Default false
+
+      if (lscache.isExpired(key)) {
+        if (!skipRemove) {
+          var exprKey = expirationKey(key);
+          value = getItem(key);  // Cache in case allowExpired is also true!
           removeItem(key);
           removeItem(exprKey);
+        }
+        if (!allowExpired) {
           return null;
         }
       }
 
       // Tries to de-serialize stored value if its an object, and returns the normal value otherwise.
-      var value = getItem(key);
+      if (!value) { value = getItem(key); }
       if (!value || !supportsJSON()) {
         return value;
       }
