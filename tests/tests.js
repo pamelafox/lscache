@@ -2,8 +2,9 @@
 /* global QUnit, test, equal, asyncTest, start, define */
 
 var startTests = function (lscache) {
-  
+
   var originalConsole = window.console;
+  var CACHE_PREFIX = 'lscache-';
 
   QUnit.module('lscache', {
     setup: function() {
@@ -200,6 +201,36 @@ var startTests = function (lscache) {
       }, 1000*60*minutes);
     });
 
+    asyncTest("Test isExpired() function", function() {
+      var key = 'thekey', val = 'thevalue', mins = 1,
+          strictEqual = window.strictEqual;
+
+      lscache.set(key, val, mins);
+
+      setTimeout(function () {
+        strictEqual(lscache.isExpired(key), true, 'Ensure the key is considered expired');
+        start();
+      }, mins * 60 * 1000 + 1000);  // 1 second longer
+    });
+
+    asyncTest("Test get() skipRemove/allowExpired parameters", function() {
+      var key = 'thekey', val = 'thevalue', mins = 1,
+          strictEqual = window.strictEqual;
+
+      lscache.set(key, val, mins);
+
+      setTimeout(function () {
+        strictEqual(lscache.get(key, true), null, 'get() should return null for the expired key');
+        strictEqual(localStorage.getItem(CACHE_PREFIX + key), val, 'Ensure the value was not removed in the last get() call');
+        strictEqual(lscache.get(key, true, true), val, 'get() should return the value when allowExpired is true');
+
+        // Now, call without skipRemove, we should get the value but it should also be removed
+        strictEqual(lscache.get(key, false, true), val, 'get() should return the value when allowExpired is true');
+        strictEqual(localStorage.getItem(CACHE_PREFIX + key), null, 'Ensure the value was removed in the last get() call');
+
+        start();
+      }, mins * 60 * 1000 + 1000);  // 1 second longer
+    });
   }
 
   if (QUnit.config.autostart === false) {
@@ -213,7 +244,7 @@ if (typeof module !== "undefined" && module.exports) {
   var qunit = require('qunit');
   startTests(lscache);
 } else if (typeof define === 'function' && define.amd) {
- 
+
   QUnit.config.autostart = false;
   require(['../lscache'], startTests);
 } else {

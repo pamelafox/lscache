@@ -213,14 +213,13 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     },
 
     /**
-     * Retrieves specified value from localStorage, if not expired.
+     * Checks whether a given key is expired
      * @param {string} key
-     * @return {string|Object}
+     * @return {Boolean}
      */
-    get: function(key) {
+    isExpired: function(key) {
       if (!supportsStorage()) return null;
 
-      // Return the de-serialized item if not expired
       var exprKey = expirationKey(key);
       var expr = getItem(exprKey);
 
@@ -229,14 +228,42 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
 
         // Check if we should actually kick item out of storage
         if (currentTime() >= expirationTime) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+
+    /**
+     * Retrieves specified value from localStorage, if not expired.
+     * @param {string} key
+     * @param {boolean} skipRemove Don't remove the item if expired [Default: false]
+     * @param {boolean} allowExpr  Allow returning of expired values  [Default: false]
+     * @return {string|Object}
+     */
+    get: function(key, skipRemove, allowExpired) {
+      if (!supportsStorage()) return null;
+
+      var value;
+
+      skipRemove = (skipRemove === true);  // Default false
+      allowExpired = (allowExpired === true); // Default false
+
+      if (lscache.isExpired(key)) {
+        if (!skipRemove) {
+          var exprKey = expirationKey(key);
+          value = getItem(key);  // Cache in case allowExpired is also true!
           removeItem(key);
           removeItem(exprKey);
+        }
+        if (!allowExpired) {
           return null;
         }
       }
 
       // Tries to de-serialize stored value if its an object, and returns the normal value otherwise.
-      var value = getItem(key);
+      if (!value) { value = getItem(key); }
       if (!value || !supportsJSON()) {
         return value;
       }
@@ -311,6 +338,9 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   // Return the module
   return lscache;
 }));
+
+},{}],"qunit":[function(require,module,exports){
+module.exports=require('nCxwBE');
 },{}],"nCxwBE":[function(require,module,exports){
 (function (global){
 (function browserifyShim(module, exports, define, browserify_shim__define__module__export__) {
@@ -1931,15 +1961,14 @@ QUnit.diff = (function() {
 }).call(global, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"qunit":[function(require,module,exports){
-module.exports=require('nCxwBE');
 },{}],4:[function(require,module,exports){
 /* jshint undef:true, browser:true, node:true */
 /* global QUnit, test, equal, asyncTest, start, define */
 
 var startTests = function (lscache) {
-  
+
   var originalConsole = window.console;
+  var CACHE_PREFIX = 'lscache-';
 
   QUnit.module('lscache', {
     setup: function() {
@@ -2136,6 +2165,36 @@ var startTests = function (lscache) {
       }, 1000*60*minutes);
     });
 
+    asyncTest("Test isExpired() function", function() {
+      var key = 'thekey', val = 'thevalue', mins = 1,
+          strictEqual = window.strictEqual;
+
+      lscache.set(key, val, mins);
+
+      setTimeout(function () {
+        strictEqual(lscache.isExpired(key), true, 'Ensure the key is considered expired');
+        start();
+      }, mins * 60 * 1000 + 1000);  // 1 second longer
+    });
+
+    asyncTest("Test get() skipRemove/allowExpired parameters", function() {
+      var key = 'thekey', val = 'thevalue', mins = 1,
+          strictEqual = window.strictEqual;
+
+      lscache.set(key, val, mins);
+
+      setTimeout(function () {
+        strictEqual(lscache.get(key, true), null, 'get() should return null for the expired key');
+        strictEqual(localStorage.getItem(CACHE_PREFIX + key), val, 'Ensure the value was not removed in the last get() call');
+        strictEqual(lscache.get(key, true, true), val, 'get() should return the value when allowExpired is true');
+
+        // Now, call without skipRemove, we should get the value but it should also be removed
+        strictEqual(lscache.get(key, false, true), val, 'get() should return the value when allowExpired is true');
+        strictEqual(localStorage.getItem(CACHE_PREFIX + key), null, 'Ensure the value was removed in the last get() call');
+
+        start();
+      }, mins * 60 * 1000 + 1000);  // 1 second longer
+    });
   }
 
   if (QUnit.config.autostart === false) {
@@ -2149,7 +2208,7 @@ if (typeof module !== "undefined" && module.exports) {
   var qunit = require('qunit');
   startTests(lscache);
 } else if (typeof define === 'function' && define.amd) {
- 
+
   QUnit.config.autostart = false;
   require(['../lscache'], startTests);
 } else {
