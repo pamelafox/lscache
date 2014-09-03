@@ -68,8 +68,15 @@
       setItem(key, value);
       removeItem(key);
       cachedStorage = true;
-    } catch (exc) {
-      cachedStorage = false;
+    } catch (e) {
+        if (e.name === 'QUOTA_EXCEEDED_ERR' || 
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || 
+            e.name === 'QuotaExceededError') {
+            cachedStorage = true; //If we hit the limit, then it means we have support, 
+                                  //just maxed it out and even the set test failed.
+        } else {
+            cachedStorage = false;
+        }
     }
     return cachedStorage;
   }
