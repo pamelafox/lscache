@@ -34,7 +34,7 @@
   // Prefix for all lscache keys
   var CACHE_PREFIX = 'lscache-';
 
-  // Suffix for the key name on the expiration items in localStorage
+  // Suffix for the key name on the expiration items in storageBackend
   var CACHE_SUFFIX = '-cacheexpiration';
 
   // expiration date radix (set to Base-36 for most space savings)
@@ -46,12 +46,15 @@
   // ECMAScript max Date (epoch + 1e8 days)
   var MAX_DATE = Math.floor(8.64e15/EXPIRY_UNITS);
 
+  var STORAGE_BACKENDS = { LOCAL: localStorage, SESSION: sessionStorage };
+
+  var storageBackend = STORAGE_BACKENDS.LOCAL;
   var cachedStorage;
   var cachedJSON;
   var cacheBucket = '';
   var warnings = false;
 
-  // Determines if localStorage is supported in the browser;
+  // Determines if storageBackend is supported in the browser;
   // result is cached for better performance instead of being run each time.
   // Feature detection is based on how Modernizr does it;
   // it's not straightforward due to FF4 issues.
@@ -84,7 +87,7 @@
   }
 
   /**
-   * Returns the full string for the localStorage expiration item.
+   * Returns the full string for the storageBackend expiration item.
    * @param {String} key
    * @return {string}
    */
@@ -101,21 +104,21 @@
   }
 
   /**
-   * Wrapper functions for localStorage methods
+   * Wrapper functions for storageBackend methods
    */
 
   function getItem(key) {
-    return localStorage.getItem(CACHE_PREFIX + cacheBucket + key);
+    return storageBackend.getItem(CACHE_PREFIX + cacheBucket + key);
   }
 
   function setItem(key, value) {
     // Fix for iPad issue - sometimes throws QUOTA_EXCEEDED_ERR on setItem.
-    localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
-    localStorage.setItem(CACHE_PREFIX + cacheBucket + key, value);
+    storageBackend.removeItem(CACHE_PREFIX + cacheBucket + key);
+    storageBackend.setItem(CACHE_PREFIX + cacheBucket + key, value);
   }
 
   function removeItem(key) {
-    localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
+    storageBackend.removeItem(CACHE_PREFIX + cacheBucket + key);
   }
 
   function warn(message, err) {
@@ -127,7 +130,7 @@
 
   var lscache = {
     /**
-     * Stores the value in localStorage. Expires after specified number of minutes.
+     * Stores the value in storageBackend. Expires after specified number of minutes.
      * @param {string} key
      * @param {Object|string} value
      * @param {number} time
@@ -157,8 +160,8 @@
           // by the expire time, and then remove the N oldest
           var storedKeys = [];
           var storedKey;
-          for (var i = 0; i < localStorage.length; i++) {
-            storedKey = localStorage.key(i);
+          for (var i = 0; i < storageBackend.length; i++) {
+            storedKey = storageBackend.key(i);
 
             if (storedKey.indexOf(CACHE_PREFIX + cacheBucket) === 0 && storedKey.indexOf(CACHE_SUFFIX) < 0) {
               var mainKey = storedKey.substr((CACHE_PREFIX + cacheBucket).length);
@@ -202,17 +205,17 @@
         }
       }
 
-      // If a time is specified, store expiration info in localStorage
+      // If a time is specified, store expiration info in storageBackend
       if (time) {
         setItem(expirationKey(key), (currentTime() + time).toString(EXPIRY_RADIX));
       } else {
-        // In case they previously set a time, remove that info from localStorage.
+        // In case they previously set a time, remove that info from storageBackend.
         removeItem(expirationKey(key));
       }
     },
 
     /**
-     * Retrieves specified value from localStorage, if not expired.
+     * Retrieves specified value from storageBackend, if not expired.
      * @param {string} key
      * @return {string|Object}
      */
@@ -250,7 +253,7 @@
     },
 
     /**
-     * Removes a value from localStorage.
+     * Removes a value from storageBackend.
      * Equivalent to 'delete' in memcache, but that's a keyword in JS.
      * @param {string} key
      */
@@ -270,16 +273,16 @@
     },
 
     /**
-     * Flushes all lscache items and expiry markers without affecting rest of localStorage
+     * Flushes all lscache items and expiry markers without affecting rest of storageBackend
      */
     flush: function() {
       if (!supportsStorage()) return;
 
       // Loop in reverse as removing items will change indices of tail
-      for (var i = localStorage.length-1; i >= 0 ; --i) {
-        var key = localStorage.key(i);
+      for (var i = storageBackend.length-1; i >= 0 ; --i) {
+        var key = storageBackend.key(i);
         if (key.indexOf(CACHE_PREFIX + cacheBucket) === 0) {
-          localStorage.removeItem(key);
+          storageBackend.removeItem(key);
         }
       }
     },
@@ -297,6 +300,13 @@
      */
     resetBucket: function() {
       cacheBucket = '';
+    },
+
+    /**
+     * Set storageBackend to use sessionStorage
+     */
+    enableSession: function() {
+      storageBackend = STORAGE_BACKENDS.SESSION;
     },
 
     /**

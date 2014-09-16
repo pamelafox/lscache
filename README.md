@@ -1,6 +1,6 @@
 lscache
 ===============================
-This is a simple library that emulates `memcache` functions using HTML5 `localStorage`, so that you can cache data on the client
+This is a simple library that emulates `memcache` functions using HTML5 `localStorage` or `sessionStorage`, so that you can cache data on the client
 and associate an expiration time with each piece of data. If the `localStorage` limit (~5MB) is exceeded, it tries to create space by removing the items that are closest to expiring anyway. If `localStorage` is not available at all in the browser, the library degrades by simply not caching and all cache requests return null.
 
 Methods
@@ -44,6 +44,11 @@ Removes all lscache items from localStorage without affecting other data.
 Appends CACHE_PREFIX so lscache will partition data in to different buckets
 #### Arguments
 1. `bucket` (**string**)
+
+* * *
+
+### lscache.enableSession
+Uses `sessionStorage` instead of `localStorage`.
 
 Usage
 -------
