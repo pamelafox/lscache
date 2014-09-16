@@ -1,17 +1,17 @@
 lscache
 ===============================
-This is a simple library that emulates `memcache` functions using HTML5 `localStorage`, so that you can cache data on the client
-and associate an expiration time with each piece of data. If the `localStorage` limit (~5MB) is exceeded, it tries to create space by removing the items that are closest to expiring anyway. If `localStorage` is not available at all in the browser, the library degrades by simply not caching and all cache requests return null.
+This is a simple library that emulates `memcache` functions using HTML5 `localStorage` or `sessionStorage` as the Storage Backend, so that you can cache data on the client
+and associate an expiration time with each piece of data. If the cache limit (~5MB) is exceeded, it tries to create space by removing the items that are closest to expiring anyway. If the Storage Backend is not available at all in the browser, the library degrades by simply not caching and all cache requests return null.
 
 Methods
 -------
 
-The library exposes 5 methods: `set()`, `get()`, `remove()`, `flush()`, and `setBucket()`.
+The library exposes 6 methods: `set()`, `get()`, `remove()`, `flush()`, `setBucket()`, and `enableSession()`.
 
 * * *
 
 ### lscache.set
-Stores the value in localStorage. Expires after specified number of minutes.
+Stores the value in cache. Expires after specified number of minutes.
 #### Arguments
 1. `key` (**string**)
 2. `value` (**Object|string**)
@@ -20,7 +20,7 @@ Stores the value in localStorage. Expires after specified number of minutes.
 * * *
 
 ### lscache.get
-Retrieves specified value from localStorage, if not expired.
+Retrieves specified value from cache, if not expired.
 #### Arguments
 1. `key` (**string**)
 #### Returns
@@ -29,14 +29,14 @@ Retrieves specified value from localStorage, if not expired.
 * * *
 
 ### lscache.remove
-Removes a value from localStorage.
+Removes a value from cache.
 #### Arguments
 1. `key` (**string**)
 
 * * *
 
 ### lscache.flush
-Removes all lscache items from localStorage without affecting other data.
+Removes all lscache items from cache without affecting other data.
 
 * * *
 
@@ -44,6 +44,11 @@ Removes all lscache items from localStorage without affecting other data.
 Appends CACHE_PREFIX so lscache will partition data in to different buckets
 #### Arguments
 1. `bucket` (**string**)
+
+* * *
+
+### lscache.enableSession
+Uses `sessionStorage` instead of `localStorage`.
 
 Usage
 -------
@@ -132,7 +137,7 @@ function fetchJSON() {
 }
 ```
 
-It does not have to be used for only expiration-based caching, however. It can also be used as just a wrapper for `localStorage`, as it provides the benefit of handling JS object (de-)serialization.
+It does not have to be used for only expiration-based caching, however. It can also be used as just a wrapper for `localStorage` or `sessionStorage`, as it provides the benefit of handling JS object (de-)serialization.
 
 For example, the [QuizCards](http://quizcards.info) Chrome extensions use `lscache`
 to store the user statistics for each user bucket, and those stats are an array
@@ -157,7 +162,7 @@ function initBuckets() {
 Browser Support
 ----------------
 
-The `lscache` library should work in all browsers where `localStorage` is supported.
+The `lscache` library should work in all browsers where `localStorage` or `sessionStorage` is supported.
 A list of those is here:
 http://www.quirksmode.org/dom/html5.html
 
