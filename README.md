@@ -6,7 +6,7 @@ and associate an expiration time with each piece of data. If the cache limit (~5
 Methods
 -------
 
-The library exposes 5 methods: `set()`, `get()`, `remove()`, `flush()`, and `setBucket()`.
+The library exposes 6 methods: `set()`, `get()`, `remove()`, `flush()`, `setBucket()`, and `enableSession()`.
 
 * * *
 
