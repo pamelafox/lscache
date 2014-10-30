@@ -69,10 +69,24 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
       setItem(key, value);
       removeItem(key);
       cachedStorage = true;
-    } catch (exc) {
-      cachedStorage = false;
+    } catch (e) {
+        if (isOutOfSpace(e)) {    // If we hit the limit, then it means we have support, 
+            cachedStorage = true; // just maxed it out and even the set test failed.
+        } else {
+            cachedStorage = false;
+        }
     }
     return cachedStorage;
+  }
+
+  // Check to set if the error is us dealing with being out of space
+  function isOutOfSpace(e) {
+    if (e && e.name === 'QUOTA_EXCEEDED_ERR' || 
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || 
+            e.name === 'QuotaExceededError') {
+        return true;
+    }
+    return false;
   }
 
   // Determines if native JSON (de-)serialization is supported in the browser.
@@ -153,7 +167,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
       try {
         setItem(key, value);
       } catch (e) {
-        if (e.name === 'QUOTA_EXCEEDED_ERR' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.name === 'QuotaExceededError') {
+        if (isOutOfSpace(e)) {
           // If we exceeded the quota, then we will sort
           // by the expire time, and then remove the N oldest
           var storedKeys = [];
@@ -311,6 +325,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   // Return the module
   return lscache;
 }));
+
 },{}],"nCxwBE":[function(require,module,exports){
 (function (global){
 (function browserifyShim(module, exports, define, browserify_shim__define__module__export__) {
