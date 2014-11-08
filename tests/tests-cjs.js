@@ -265,6 +265,31 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     },
 
     /**
+     * Attempts to get a key from localStorage cache.
+     * If the get request returns null (the key has not been set)
+     * then the callback is run and the result is stored
+     * @param {string} key
+     * @param {function|string|object} val
+     * @param {number} time
+     */
+    fetch: function(key, val, time) {
+      var retrieveCache = this.get(key),
+          newCacheValue = val;
+
+      if(retrieveCache){
+        return retrieveCache;
+      }
+
+      if(val instanceof Function){
+        newCacheValue = val();
+      }
+
+      this.set(key, newCacheValue);
+
+      return newCacheValue;
+    },
+
+    /**
      * Removes a value from localStorage.
      * Equivalent to 'delete' in memcache, but that's a keyword in JS.
      * @param {string} key
@@ -326,6 +351,8 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   return lscache;
 }));
 
+},{}],"qunit":[function(require,module,exports){
+module.exports=require('nCxwBE');
 },{}],"nCxwBE":[function(require,module,exports){
 (function (global){
 (function browserifyShim(module, exports, define, browserify_shim__define__module__export__) {
@@ -1946,8 +1973,6 @@ QUnit.diff = (function() {
 }).call(global, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"qunit":[function(require,module,exports){
-module.exports=require('nCxwBE');
 },{}],4:[function(require,module,exports){
 /* jshint undef:true, browser:true, node:true */
 /* global QUnit, test, equal, asyncTest, start, define */
@@ -2119,6 +2144,73 @@ var startTests = function (lscache) {
       // Test that latest added is still there
       equal(lscache.get(currentKey), longString, 'We expect value to be set');
     });
+
+    // The fetch method will allow us to insert a key in if nothing is found
+    // Test fetch when data already inserted
+    test('Testing fetch() with key already inserted', function(){
+      localStorage.clear();
+      var key = 'cache-key',
+          value = 'original-value',
+          newValue = 'new-value',
+          bucket = 'my-bucket';
+
+      lscache.setBucket(bucket);
+      lscache.set(key, value);
+
+      var fetchResponse = lscache.fetch(key, function(){
+        return newValue;
+      });
+
+      equal(fetchResponse, value, 'Expects fetch to return key when set');
+    });
+
+    test('Testing fetch() without key inserted', function(){
+      localStorage.clear();
+      var key = 'cache-key',
+          value = 'new-value',
+          bucket = 'my-bucket';
+
+      lscache.setBucket(bucket);
+
+      var fetchResponse = lscache.fetch(key, function(){
+        return value;
+      });
+      
+      equal(fetchResponse, value, 'Expects fetch to return key when set');
+    });
+
+
+    test('Testing get() after fetch() inserts new data with function callback', function(){
+      localStorage.clear();
+      var key = 'cache-key',
+          value = 'new-value',
+          bucket = 'my-bucket';
+
+      lscache.setBucket(bucket);
+
+      var fetchResponse = lscache.fetch(key, function(){
+        return value;
+      });
+
+      var getResponse = lscache.get(key);
+      
+      equal(getResponse, value, 'Expects fetch to save the result of the callback function to the key');
+    });
+
+    test('Testing get() after fetch() inserts new data from string', function(){
+      localStorage.clear();
+      var key = 'cache-key',
+          value = 'new-value',
+          bucket = 'my-bucket';
+
+      lscache.setBucket(bucket);
+
+      var fetchResponse = lscache.fetch(key, value);
+      var getResponse = lscache.get(key);
+      
+      equal(getResponse, value, 'Expects fetch to save the result of the callback function to the key');
+    });
+
 
     // We do this test last since it must wait 1 minute
     asyncTest('Testing set() and get() with string and expiration', 1, function() {

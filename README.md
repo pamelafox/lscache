@@ -28,6 +28,17 @@ Retrieves specified value from localStorage, if not expired.
 
 * * *
 
+### lscache.fetch
+Retrieves specified value from localStorage if exists.  If key cannot be found runs callback function and inserts result in to cache.
+#### Arguments
+1. `key` (**string**)
+2. `val` (**function**|**Object**|**string**)
+3. `time` (**number: optional**)
+#### Returns
+**string | Object** : The stored value.
+
+* * *
+
 ### lscache.remove
 Removes a value from localStorage.
 #### Arguments

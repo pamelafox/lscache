@@ -169,6 +169,73 @@ var startTests = function (lscache) {
       equal(lscache.get(currentKey), longString, 'We expect value to be set');
     });
 
+    // The fetch method will allow us to insert a key in if nothing is found
+    // Test fetch when data already inserted
+    test('Testing fetch() with key already inserted', function(){
+      localStorage.clear();
+      var key = 'cache-key',
+          value = 'original-value',
+          newValue = 'new-value',
+          bucket = 'my-bucket';
+
+      lscache.setBucket(bucket);
+      lscache.set(key, value);
+
+      var fetchResponse = lscache.fetch(key, function(){
+        return newValue;
+      });
+
+      equal(fetchResponse, value, 'Expects fetch to return key when set');
+    });
+
+    test('Testing fetch() without key inserted', function(){
+      localStorage.clear();
+      var key = 'cache-key',
+          value = 'new-value',
+          bucket = 'my-bucket';
+
+      lscache.setBucket(bucket);
+
+      var fetchResponse = lscache.fetch(key, function(){
+        return value;
+      });
+      
+      equal(fetchResponse, value, 'Expects fetch to return key when set');
+    });
+
+
+    test('Testing get() after fetch() inserts new data with function callback', function(){
+      localStorage.clear();
+      var key = 'cache-key',
+          value = 'new-value',
+          bucket = 'my-bucket';
+
+      lscache.setBucket(bucket);
+
+      var fetchResponse = lscache.fetch(key, function(){
+        return value;
+      });
+
+      var getResponse = lscache.get(key);
+      
+      equal(getResponse, value, 'Expects fetch to save the result of the callback function to the key');
+    });
+
+    test('Testing get() after fetch() inserts new data from string', function(){
+      localStorage.clear();
+      var key = 'cache-key',
+          value = 'new-value',
+          bucket = 'my-bucket';
+
+      lscache.setBucket(bucket);
+
+      var fetchResponse = lscache.fetch(key, value);
+      var getResponse = lscache.get(key);
+      
+      equal(getResponse, value, 'Expects fetch to save the result of the callback function to the key');
+    });
+
+
     // We do this test last since it must wait 1 minute
     asyncTest('Testing set() and get() with string and expiration', 1, function() {
 

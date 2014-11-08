@@ -264,6 +264,31 @@
     },
 
     /**
+     * Attempts to get a key from localStorage cache.
+     * If the get request returns null (the key has not been set)
+     * then the callback is run and the result is stored
+     * @param {string} key
+     * @param {function|string|object} val
+     * @param {number} time
+     */
+    fetch: function(key, val, time) {
+      var retrieveCache = this.get(key),
+          newCacheValue = val;
+
+      if(retrieveCache){
+        return retrieveCache;
+      }
+
+      if(val instanceof Function){
+        newCacheValue = val();
+      }
+
+      this.set(key, newCacheValue);
+
+      return newCacheValue;
+    },
+
+    /**
      * Removes a value from localStorage.
      * Equivalent to 'delete' in memcache, but that's a keyword in JS.
      * @param {string} key
