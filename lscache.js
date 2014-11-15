@@ -132,6 +132,42 @@
     localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
   }
 
+  function eachKey(fn) {
+    var prefixRegExp = new RegExp('^' + CACHE_PREFIX + cacheBucket + '(.*)');
+    // Loop in reverse as removing items will change indices of tail
+    for (var i = localStorage.length-1; i >= 0 ; --i) {
+      var key = localStorage.key(i);
+      key = key && key.match(prefixRegExp);
+      key = key && key[1];
+      if (key && key.indexOf(CACHE_SUFFIX) < 0) {
+        fn(key, expirationKey(key));
+      }
+    }
+  }
+
+  function flushItem(key) {
+    var exprKey = expirationKey(key);
+
+    removeItem(key);
+    removeItem(exprKey);
+  }
+
+  function flushExpiredItem(key) {
+    var exprKey = expirationKey(key);
+    var expr = getItem(exprKey);
+
+    if (expr) {
+      var expirationTime = parseInt(expr, EXPIRY_RADIX);
+
+      // Check if we should actually kick item out of storage
+      if (currentTime() >= expirationTime) {
+        removeItem(key);
+        removeItem(exprKey);
+        return true;
+      }
+    }
+  }
+
   function warn(message, err) {
     if (!warnings) return;
     if (!('console' in window) || typeof window.console.warn !== 'function') return;
@@ -171,26 +207,20 @@
           // by the expire time, and then remove the N oldest
           var storedKeys = [];
           var storedKey;
-          for (var i = 0; i < localStorage.length; i++) {
-            storedKey = localStorage.key(i);
-
-            if (storedKey.indexOf(CACHE_PREFIX + cacheBucket) === 0 && storedKey.indexOf(CACHE_SUFFIX) < 0) {
-              var mainKey = storedKey.substr((CACHE_PREFIX + cacheBucket).length);
-              var exprKey = expirationKey(mainKey);
-              var expiration = getItem(exprKey);
-              if (expiration) {
-                expiration = parseInt(expiration, EXPIRY_RADIX);
-              } else {
-                // TODO: Store date added for non-expiring items for smarter removal
-                expiration = MAX_DATE;
-              }
-              storedKeys.push({
-                key: mainKey,
-                size: (getItem(mainKey)||'').length,
-                expiration: expiration
-              });
+          eachKey(function(key, exprKey) {
+            var expiration = getItem(exprKey);
+            if (expiration) {
+              expiration = parseInt(expiration, EXPIRY_RADIX);
+            } else {
+              // TODO: Store date added for non-expiring items for smarter removal
+              expiration = MAX_DATE;
             }
-          }
+            storedKeys.push({
+              key: key,
+              size: (getItem(key) || '').length,
+              expiration: expiration
+            });
+          });
           // Sorts the keys with oldest expiration time last
           storedKeys.sort(function(a, b) { return (b.expiration-a.expiration); });
 
@@ -198,8 +228,7 @@
           while (storedKeys.length && targetSize > 0) {
             storedKey = storedKeys.pop();
             warn("Cache is full, removing item with key '" + key + "'");
-            removeItem(storedKey.key);
-            removeItem(expirationKey(storedKey.key));
+            flushItem(storedKey.key);
             targetSize -= storedKey.size;
           }
           try {
@@ -234,19 +263,7 @@
       if (!supportsStorage()) return null;
 
       // Return the de-serialized item if not expired
-      var exprKey = expirationKey(key);
-      var expr = getItem(exprKey);
-
-      if (expr) {
-        var expirationTime = parseInt(expr, EXPIRY_RADIX);
-
-        // Check if we should actually kick item out of storage
-        if (currentTime() >= expirationTime) {
-          removeItem(key);
-          removeItem(exprKey);
-          return null;
-        }
-      }
+      if (flushExpiredItem(key)) { return null; }
 
       // Tries to de-serialize stored value if its an object, and returns the normal value otherwise.
       var value = getItem(key);
@@ -269,9 +286,9 @@
      * @param {string} key
      */
     remove: function(key) {
-      if (!supportsStorage()) return null;
-      removeItem(key);
-      removeItem(expirationKey(key));
+      if (!supportsStorage()) return;
+
+      flushItem(key);
     },
 
     /**
@@ -289,13 +306,20 @@
     flush: function() {
       if (!supportsStorage()) return;
 
-      // Loop in reverse as removing items will change indices of tail
-      for (var i = localStorage.length-1; i >= 0 ; --i) {
-        var key = localStorage.key(i);
-        if (key.indexOf(CACHE_PREFIX + cacheBucket) === 0) {
-          localStorage.removeItem(key);
-        }
-      }
+      eachKey(function(key) {
+        flushItem(key);
+      });
+    },
+
+    /**
+     * Flushes expired lscache items and expiry markers without affecting rest of localStorage
+     */
+    flushExpired: function() {
+      if (!supportsStorage()) return;
+
+      eachKey(function(key) {
+        flushExpiredItem(key);
+      });
     },
 
     /**
