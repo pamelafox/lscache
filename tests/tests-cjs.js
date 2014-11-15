@@ -350,8 +350,6 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   return lscache;
 }));
 
-},{}],"qunit":[function(require,module,exports){
-module.exports=require('nCxwBE');
 },{}],"nCxwBE":[function(require,module,exports){
 (function (global){
 (function browserifyShim(module, exports, define, browserify_shim__define__module__export__) {
@@ -1972,6 +1970,8 @@ QUnit.diff = (function() {
 }).call(global, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],"qunit":[function(require,module,exports){
+module.exports=require('nCxwBE');
 },{}],4:[function(require,module,exports){
 /* jshint undef:true, browser:true, node:true */
 /* global QUnit, test, equal, asyncTest, start, define */
@@ -2184,7 +2184,7 @@ var startTests = function (lscache) {
 
       setTimeout(function() {
         lscache.flushExpired();
-        equal(lscache.get(unexpiredKey), 'bla', 'We expect unexpired value to be survive flush');
+        equal(lscache.get(unexpiredKey), 'bla', 'We expect unexpired value to survive flush');
         equal(lscache.get(expiredKey), null, 'We expect expired value to be flushed');
         equal(localStorage.getItem('outside-cache'), 'not part of lscache', 'We expect localStorage value to still persist');
         start();
