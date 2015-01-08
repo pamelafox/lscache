@@ -87,6 +87,49 @@ var startTests = function (lscache) {
       equal(lscache.get(key), value1, 'We expect "' + value1 + '", the non-bucket value, to persist');
     });
 
+    asyncTest('Testing watch()', 2, function() {
+      lscache.watch("foo", wrongBucket);
+      function wrongBucket() {
+        equal(false, true, "wrong bucket");
+      }      
+
+      lscache.setBucket("iframeTest");
+      lscache.set("foo", "foo");
+      lscache.watch("foo", fooChanged);
+
+      var timeout = setTimeout(function() {
+        equal(false, true, "foo never changed");
+        done();
+      }, 10000);
+
+      // load another frame to trigger a storage event
+      var ifr = document.createElement("iframe");
+      ifr.src = "test-iframe-set-foo.html";
+      document.body.appendChild(ifr);
+
+      function fooChanged() {
+        equal(lscache.get("foo"), "bar");
+
+        lscache.unwatch("foo", fooChanged);
+        lscache.watch("foo", fooRemoved);
+        ifr.src = "test-iframe-remove-foo.html";
+      }
+
+      function fooRemoved() {
+        equal(lscache.get("foo"), null);
+        lscache.unwatch("foo", fooRemoved);
+        done();
+      }
+
+      function done() {
+        clearTimeout(timeout);
+        lscache.resetBucket();
+        lscache.unwatch("foo", wrongBucket);
+        document.body.removeChild(ifr);
+        start();
+      }
+    });
+
     test('Testing setWarnings()', function() {
       window.console = {
         calls: 0,

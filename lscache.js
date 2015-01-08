@@ -34,6 +34,9 @@
   // Prefix for all lscache keys
   var CACHE_PREFIX = 'lscache-';
 
+  // prefix used to signal when we made a change
+  var CHANGE_PREFIX = 'lscachechange-';
+
   // Suffix for the key name on the expiration items in localStorage
   var CACHE_SUFFIX = '-cacheexpiration';
 
@@ -126,10 +129,19 @@
     // Fix for iPad issue - sometimes throws QUOTA_EXCEEDED_ERR on setItem.
     localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
     localStorage.setItem(CACHE_PREFIX + cacheBucket + key, value);
+    // notify using a different key so that we don't trigger 2 callbacks
+    notifyChange(key);
+  }
+
+  function notifyChange(key) {
+    // Store a boolean flag that we toggle on and off to signal changes.
+    var changeKey = CHANGE_PREFIX + CACHE_PREFIX + cacheBucket + key;
+    localStorage.setItem(changeKey, (localStorage.getItem(changeKey) === "1" ? "0" : "1"));
   }
 
   function removeItem(key) {
     localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
+    localStorage.removeItem(CHANGE_PREFIX + CACHE_PREFIX + cacheBucket + key);
   }
 
   function eachKey(fn) {
@@ -174,6 +186,16 @@
     window.console.warn("lscache - " + message);
     if (err) window.console.warn("lscache - The error was: " + err.message);
   }
+
+  var watches = {};
+  window.addEventListener('storage', function(e) {
+    var watchers = watches[e.key] || [];
+    var fn;
+    for (var i = 0; i < watchers.length; i++) {
+      fn = watchers[i];
+      fn();
+    }
+  }, false);
 
   var lscache = {
     /**
@@ -278,6 +300,31 @@
         // If we can't parse, it's probably because it isn't an object
         return value;
       }
+    },
+
+    /**
+     * Watches a key for changes from another window.
+     *
+     * NOTE: This only monitors keys changed through lscache.
+     *
+     * @param {string} key the key to watch.
+     * @param {Function} callback
+     */
+    watch: function(key, callback) {
+      var changeKey = CHANGE_PREFIX + CACHE_PREFIX + cacheBucket + key;
+      var watchers = watches[changeKey] = watches[changeKey] || [];
+      watchers.push(callback);
+    },
+
+    /**
+     * Stop watching a key watched by watch().
+     * @param {string} key
+     * @param {Function} callback
+     */
+    unwatch: function(key, callback) {
+      var changeKey = CHANGE_PREFIX + CACHE_PREFIX + cacheBucket + key;
+      var watchers = watches[changeKey] = watches[changeKey] || [];
+      watchers.splice(watchers.indexOf(callback));
     },
 
     /**

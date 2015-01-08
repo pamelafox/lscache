@@ -35,6 +35,9 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   // Prefix for all lscache keys
   var CACHE_PREFIX = 'lscache-';
 
+  // prefix used to signal when we made a change
+  var CHANGE_PREFIX = 'lscachechange-';
+
   // Suffix for the key name on the expiration items in localStorage
   var CACHE_SUFFIX = '-cacheexpiration';
 
@@ -127,10 +130,19 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     // Fix for iPad issue - sometimes throws QUOTA_EXCEEDED_ERR on setItem.
     localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
     localStorage.setItem(CACHE_PREFIX + cacheBucket + key, value);
+    // notify using a different key so that we don't trigger 2 callbacks
+    notifyChange(key);
+  }
+
+  function notifyChange(key) {
+    // Store a boolean flag that we toggle on and off to signal changes.
+    var changeKey = CHANGE_PREFIX + CACHE_PREFIX + cacheBucket + key;
+    localStorage.setItem(changeKey, (localStorage.getItem(changeKey) === "1" ? "0" : "1"));
   }
 
   function removeItem(key) {
     localStorage.removeItem(CACHE_PREFIX + cacheBucket + key);
+    localStorage.removeItem(CHANGE_PREFIX + CACHE_PREFIX + cacheBucket + key);
   }
 
   function eachKey(fn) {
@@ -175,6 +187,16 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     window.console.warn("lscache - " + message);
     if (err) window.console.warn("lscache - The error was: " + err.message);
   }
+
+  var watches = {};
+  window.addEventListener('storage', function(e) {
+    var watchers = watches[e.key] || [];
+    var fn;
+    for (var i = 0; i < watchers.length; i++) {
+      fn = watchers[i];
+      fn();
+    }
+  }, false);
 
   var lscache = {
     /**
@@ -282,6 +304,31 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     },
 
     /**
+     * Watches a key for changes from another window.
+     *
+     * NOTE: This only monitors keys changed through lscache.
+     *
+     * @param {string} key the key to watch.
+     * @param {Function} callback
+     */
+    watch: function(key, callback) {
+      var changeKey = CHANGE_PREFIX + CACHE_PREFIX + cacheBucket + key;
+      var watchers = watches[changeKey] = watches[changeKey] || [];
+      watchers.push(callback);
+    },
+
+    /**
+     * Stop watching a key watched by watch().
+     * @param {string} key
+     * @param {Function} callback
+     */
+    unwatch: function(key, callback) {
+      var changeKey = CHANGE_PREFIX + CACHE_PREFIX + cacheBucket + key;
+      var watchers = watches[changeKey] = watches[changeKey] || [];
+      watchers.splice(watchers.indexOf(callback));
+    },
+
+    /**
      * Removes a value from localStorage.
      * Equivalent to 'delete' in memcache, but that's a keyword in JS.
      * @param {string} key
@@ -350,6 +397,8 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   return lscache;
 }));
 
+},{}],"qunit":[function(require,module,exports){
+module.exports=require('nCxwBE');
 },{}],"nCxwBE":[function(require,module,exports){
 (function (global){
 (function browserifyShim(module, exports, define, browserify_shim__define__module__export__) {
@@ -1970,8 +2019,6 @@ QUnit.diff = (function() {
 }).call(global, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"qunit":[function(require,module,exports){
-module.exports=require('nCxwBE');
 },{}],4:[function(require,module,exports){
 /* jshint undef:true, browser:true, node:true */
 /* global QUnit, test, equal, asyncTest, start, define */
@@ -2060,6 +2107,49 @@ var startTests = function (lscache) {
       equal(lscache.get(key), null, 'We expect "' + value2 + '" to be flushed for the current bucket');
       lscache.resetBucket();
       equal(lscache.get(key), value1, 'We expect "' + value1 + '", the non-bucket value, to persist');
+    });
+
+    asyncTest('Testing watch()', 2, function() {
+      lscache.watch("foo", wrongBucket);
+      function wrongBucket() {
+        equal(false, true, "wrong bucket");
+      }      
+
+      lscache.setBucket("iframeTest");
+      lscache.set("foo", "foo");
+      lscache.watch("foo", fooChanged);
+
+      var timeout = setTimeout(function() {
+        equal(false, true, "foo never changed");
+        done();
+      }, 10000);
+
+      // load another frame to trigger a storage event
+      var ifr = document.createElement("iframe");
+      ifr.src = "test-iframe-set-foo.html";
+      document.body.appendChild(ifr);
+
+      function fooChanged() {
+        equal(lscache.get("foo"), "bar");
+
+        lscache.unwatch("foo", fooChanged);
+        lscache.watch("foo", fooRemoved);
+        ifr.src = "test-iframe-remove-foo.html";
+      }
+
+      function fooRemoved() {
+        equal(lscache.get("foo"), null);
+        lscache.unwatch("foo", fooRemoved);
+        done();
+      }
+
+      function done() {
+        clearTimeout(timeout);
+        lscache.resetBucket();
+        lscache.unwatch("foo", wrongBucket);
+        document.body.removeChild(ifr);
+        start();
+      }
     });
 
     test('Testing setWarnings()', function() {
