@@ -29,7 +29,7 @@
         module.exports = factory();
     } else {
         // Browser globals
-        root.lscache = factory();
+        root.lscacheExtra = factory();
     }
 }(this, function () {
 

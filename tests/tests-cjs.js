@@ -3,6 +3,8 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
  * lscache library
  * Copyright (c) 2011, Pamela Fox
  *
+ * 6/6/2014 - isExpired/skipRemove/allowExpired additions by matt@brophy.org
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,7 +30,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
         module.exports = factory();
     } else {
         // Browser globals
-        root.lscache = factory();
+        root.lscacheExtra = factory();
     }
 }(this, function () {
 
@@ -2204,16 +2206,16 @@ var startTests = function (lscache) {
 
 if (typeof module !== "undefined" && module.exports) {
 
-  var lscache = require('../lscache');
+  var lscacheExtra = require('../lscache-extra');
   var qunit = require('qunit');
-  startTests(lscache);
+  startTests(lscacheExtra);
 } else if (typeof define === 'function' && define.amd) {
 
   QUnit.config.autostart = false;
-  require(['../lscache'], startTests);
+  require(['../lscache-extra'], startTests);
 } else {
   // Assuming that lscache has been properly included
-  startTests(lscache);
+  startTests(lscacheExtra);
 }
 
-},{"../lscache":1,"qunit":"nCxwBE"}]},{},[4])
+},{"../lscache-extra":1,"qunit":"nCxwBE"}]},{},[4])

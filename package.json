@@ -1,15 +1,15 @@
 {
-  "name": "lscache",
-  "title": "lscache",
-  "description": "A simple library that emulates memcache functions using HTML5 localStorage",
-  "author": "Pamela Fox",
+  "name": "lscache-extra",
+  "title": "lscache-extra",
+  "description": "A simple library that emulates memcache functions using HTML5 localStorage, with additional functionality",
+  "author": "Matt Brophy (matt@brophy.org)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pamelafox/lscache.git"
+    "url": "https://github.com/brophdawg11/lscache-extra.git"
   },
-  "homepage": "http://github.com/pamelafox/lscache",
-  "main": "lscache",
-  "version": "1.0.2",
+  "homepage": "http://github.com/brophdawg11/lscache-extra",
+  "main": "lscache-extra",
+  "version": "1.0.",
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-cli": "~0.1.13",

@@ -240,14 +240,14 @@ var startTests = function (lscache) {
 
 if (typeof module !== "undefined" && module.exports) {
 
-  var lscache = require('../lscache');
+  var lscacheExtra = require('../lscache-extra');
   var qunit = require('qunit');
-  startTests(lscache);
+  startTests(lscacheExtra);
 } else if (typeof define === 'function' && define.amd) {
 
   QUnit.config.autostart = false;
-  require(['../lscache'], startTests);
+  require(['../lscache-extra'], startTests);
 } else {
   // Assuming that lscache has been properly included
-  startTests(lscache);
+  startTests(lscacheExtra);
 }

@@ -3,10 +3,14 @@ lscache
 This is a simple library that emulates `memcache` functions using HTML5 `localStorage`, so that you can cache data on the client
 and associate an expiration time with each piece of data. If the `localStorage` limit (~5MB) is exceeded, it tries to create space by removing the items that are closest to expiring anyway. If `localStorage` is not available at all in the browser, the library degrades by simply not caching and all cache requests return null.
 
+Additional Functionality
+------------------------
+This library is a form of @pamelafox's [lscache library](https://github.com/pamelafox/lscache), with a little extra functionality exposed.  Namesly, the `skipRemove` and `allowExpired` parameters for `get()` and the `isExpired()` function.
+
 Methods
 -------
 
-The library exposes 5 methods: `set()`, `get()`, `remove()`, `flush()`, and `setBucket()`.
+The library exposes 5 methods: `set()`, `get()`, `isExpired()`, `remove()`, `flush()`, and `setBucket()`.
 
 * * *
 
@@ -23,8 +27,19 @@ Stores the value in localStorage. Expires after specified number of minutes.
 Retrieves specified value from localStorage, if not expired.
 #### Arguments
 1. `key` (**string**)
+2. `skipRemove` (**boolean**)  Don't remove the item if it is found to be expired [Default: false]
+3. `allowExpired` (**boolean**)  Allow returning of expired values  [Default: false]
 #### Returns
 **string | Object** : The stored value.
+
+* * *
+
+### lscache.isExpired
+Returned whether or not the given key is expired
+#### Arguments
+1. `key` (**string**)
+#### Returns
+**boolean** : Whether or not the cached value is expired
 
 * * *
 

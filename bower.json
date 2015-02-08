@@ -1,8 +1,8 @@
 {
-	"name": "lscache",
-	"version": "1.0.2",
-	"homepage": "https://github.com/pamelafox/lscache",
-	"main": ["lscache.min.js", "lscache.js"],
+	"name": "lscache-extra",
+	"version": "1.0.0",
+	"homepage": "https://github.com/brophdawg11/lscache-extra",
+	"main": [ "lscache-extra.min.js", "lscache-extra.js" ],
 	"ignore": [
 		"demo",
 		"tests",
@@ -13,6 +13,7 @@
 		"localstorage",
 		"local",
 		"storage",
-		"lscache"
+    "lscache",
+    "lscache-extra"
 	]
 }
