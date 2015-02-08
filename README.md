@@ -5,7 +5,7 @@ and associate an expiration time with each piece of data. If the `localStorage` 
 
 Additional Functionality
 ------------------------
-This library is a form of @pamelafox's [lscache library](https://github.com/pamelafox/lscache), with a little extra functionality exposed.  Namesly, the `skipRemove` and `allowExpired` parameters for `get()` and the `isExpired()` function.
+This library is a fork of @pamelafox's [lscache library](https://github.com/pamelafox/lscache), with a little extra functionality exposed.  Namely, the `skipRemove` and `allowExpired` parameters for `get()` and the `isExpired()` function.
 
 Methods
 -------
