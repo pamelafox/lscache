@@ -236,6 +236,22 @@
       return false;
     },
 
+
+    /**
+     * Sets the muber of milliseconds per 'unit' of cache time.  For example,
+     * to cache by minutes, the default, this would be (60 * 1000).  To
+     * cache by seconds, this would be 1000.
+     *
+     * Note, this flushes the lscache as well, to ensure that no prior data,
+     * using a different unit, remains in an invalid cache state
+
+     * @param {number} ms
+     */
+    setExpiryUnitMs: function (ms) {
+      lscache.flush();
+      EXPIRY_UNITS = ms;
+    },
+
     /**
      * Retrieves specified value from localStorage, if not expired.
      * @param {string} key

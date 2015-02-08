@@ -5,12 +5,12 @@ and associate an expiration time with each piece of data. If the `localStorage` 
 
 Additional Functionality
 ------------------------
-This library is a fork of @pamelafox's [lscache library](https://github.com/pamelafox/lscache), with a little extra functionality exposed.  Namely, the `skipRemove` and `allowExpired` parameters for `get()` and the `isExpired()` function.
+This library is a fork of @pamelafox's [lscache library](https://github.com/pamelafox/lscache), with a little extra functionality exposed.  Namely, the `skipRemove` and `allowExpired` parameters for `get()` and the `isExpired()` and `setExpiryUnitMs()` functions.
 
 Methods
 -------
 
-The library exposes 5 methods: `set()`, `get()`, `isExpired()`, `remove()`, `flush()`, and `setBucket()`.
+The library exposes 7 methods: `set()`, `get()`, `isExpired()`, `setExpiryUnitMs()`, `remove()`, `flush()`, and `setBucket()`.
 
 * * *
 
@@ -40,6 +40,13 @@ Returned whether or not the given key is expired
 1. `key` (**string**)
 #### Returns
 **boolean** : Whether or not the cached value is expired
+
+* * *
+
+### lscache.setExpiryUnitMs
+Change the units used for cache expiration.  Default is minutes (60 * 1000).  Note that this also flushes the lscache so that cache expirations for previously cached data with different expiry units don't become corrupted
+#### Arguments
+1. `ms` (**number**)
 
 * * *
 

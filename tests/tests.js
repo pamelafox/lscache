@@ -170,54 +170,93 @@ var startTests = function (lscache) {
       equal(lscache.get(currentKey), longString, 'We expect value to be set');
     });
 
-    // We do this test last since it must wait 1 minute
-    asyncTest('Testing set() and get() with string and expiration', 1, function() {
-
+    asyncTest('Testing setExpiryUnitMs', 2, function() {
+      // Change cache unit duration to seconds, not minutes
+      lscache.setExpiryUnitMs(1000);
       var key = 'thekey';
       var value = 'thevalue';
-      var minutes = 1;
-      lscache.set(key, value, minutes);
+      var seconds = 2;
+      lscache.set(key, value, seconds);
+      setTimeout(function() {
+        window.strictEqual(lscache.get(key), value, 'We expect value to be correct');
+      }, 1000 * (seconds / 2));
       setTimeout(function() {
         equal(lscache.get(key), null, 'We expect value to be null');
         start();
-      }, 1000*60*minutes);
+      }, 1000 * (seconds + 1));
+    });
+
+    test('Testing setExpiryUnitMs flushing', 1, function() {
+      var key = 'thekey';
+      var value = 'thevalue';
+      var seconds = 1;
+      lscache.set(key, value, seconds);
+      lscache.setExpiryUnitMs(1000);
+      equal(lscache.get(key), null, 'We expect value to be flushed');
+    });
+
+    // We do this test last since it must wait 1 minute
+    asyncTest('Testing set() and get() with string and expiration', 1, function() {
+
+      // Change cache unit duration to seconds, not minutes
+      lscache.setExpiryUnitMs(1000);
+
+      var key = 'thekey';
+      var value = 'thevalue';
+      var seconds = 1;
+      lscache.set(key, value, seconds);
+      setTimeout(function() {
+        equal(lscache.get(key), null, 'We expect value to be null');
+        start();
+      }, 1000 * (seconds + 1));
     });
 
     asyncTest('Testing set() and get() with string and expiration in a different bucket', 2, function() {
 
+      // Change cache unit duration to seconds, not minutes
+      lscache.setExpiryUnitMs(1000);
+
       var key = 'thekey';
       var value1 = 'thevalue1';
       var value2 = 'thevalue2';
-      var minutes = 1;
+      var seconds = 1;
       var bucket = 'newbucket';
-      lscache.set(key, value1, minutes * 2);
+      lscache.set(key, value1, seconds * 5);
       lscache.setBucket(bucket);
-      lscache.set(key, value2, minutes);
+      lscache.set(key, value2, seconds);
       setTimeout(function() {
         equal(lscache.get(key), null, 'We expect value to be null for the bucket: ' + bucket);
         lscache.resetBucket();
         equal(lscache.get(key), value1, 'We expect value to be ' + value1 + ' for the base bucket.');
         start();
-      }, 1000*60*minutes);
+      }, 1000 * (seconds + 1));
     });
 
     asyncTest("Test isExpired() function", function() {
-      var key = 'thekey', val = 'thevalue', mins = 1,
-          strictEqual = window.strictEqual;
+      // Change cache unit duration to seconds, not minutes
+      lscache.setExpiryUnitMs(1000);
 
-      lscache.set(key, val, mins);
+      var key = 'thekey', val = 'thevalue',
+          seconds = 1;
+
+      lscache.set(key, val, seconds);
 
       setTimeout(function () {
-        strictEqual(lscache.isExpired(key), true, 'Ensure the key is considered expired');
+        window.strictEqual(lscache.isExpired(key), true, 'Ensure the key is considered expired');
         start();
-      }, mins * 60 * 1000 + 1000);  // 1 second longer
+      }, (seconds + 1) * 1000);  // 1 second longer
     });
 
     asyncTest("Test get() skipRemove/allowExpired parameters", function() {
-      var key = 'thekey', val = 'thevalue', mins = 1,
+
+      // Change cache unit duration to seconds, not minutes
+      lscache.setExpiryUnitMs(1000);
+
+      var key = 'thekey', val = 'thevalue',
+          seconds = 1,
           strictEqual = window.strictEqual;
 
-      lscache.set(key, val, mins);
+      lscache.set(key, val, seconds);
 
       setTimeout(function () {
         strictEqual(lscache.get(key, true), null, 'get() should return null for the expired key');
@@ -229,7 +268,7 @@ var startTests = function (lscache) {
         strictEqual(localStorage.getItem(CACHE_PREFIX + key), null, 'Ensure the value was removed in the last get() call');
 
         start();
-      }, mins * 60 * 1000 + 1000);  // 1 second longer
+      }, (seconds + 1) * 1000);  // 1 second longer
     });
   }
 
