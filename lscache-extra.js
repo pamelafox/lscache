@@ -30,6 +30,11 @@
     } else {
         // Browser globals
         root.lscacheExtra = factory();
+
+        // If an angular app, also set up as a module for DI
+        if (typeof root.angular !== "undefined" && root.angular.module) {
+          root.angular.module('lscacheExtra', []).constant('lscacheExtra', root.lscacheExtra);
+        }
     }
 }(this, function () {
 

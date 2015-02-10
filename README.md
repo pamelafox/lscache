@@ -7,6 +7,13 @@ Additional Functionality
 ------------------------
 This library is a fork of @pamelafox's [lscache library](https://github.com/pamelafox/lscache), with a little extra functionality exposed.  Namely, the `skipRemove` and `allowExpired` parameters for `get()` and the `isExpired()` and `setExpiryUnitMs()` functions.
 
+Use with Angular
+----------------
+If you're using this library with Angular, it takes care of registering itself as a constant within an 'lscacheExtra' module, i.e.,
+
+`angular.module('lscacheExtra', []).constant('lscacheExtra', lscacheExtra);`
+
+
 Methods
 -------
 
