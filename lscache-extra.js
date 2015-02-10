@@ -49,6 +49,7 @@
 
   // time resolution in minutes
   var EXPIRY_UNITS = 60 * 1000;
+  var EXPIRY_UNITS_KEY = '__expiry-units-key';
 
   // ECMAScript max Date (epoch + 1e8 days)
   var MAX_DATE = Math.floor(8.64e15/EXPIRY_UNITS);
@@ -247,13 +248,20 @@
      * to cache by minutes, the default, this would be (60 * 1000).  To
      * cache by seconds, this would be 1000.
      *
-     * Note, this flushes the lscache as well, to ensure that no prior data,
-     * using a different unit, remains in an invalid cache state
+     * Note, this flushes the lscache as well if the units differ from what
+     * was previously used, to ensure that no prior data, using a different
+     * unit, remains in an invalid cache state
 
      * @param {number} ms
      */
     setExpiryUnitMs: function (ms) {
-      lscache.flush();
+      var existingUnits = lscache.get(EXPIRY_UNITS_KEY);
+      lscache.set(EXPIRY_UNITS_KEY, ms);
+
+      // Only clear if the new units dont match the old
+      if (existingUnits !== ms) {
+        lscache.flush();
+      }
       EXPIRY_UNITS = ms;
     },
 
@@ -356,6 +364,9 @@
       warnings = enabled;
     }
   };
+
+  // Set initial expiry units
+  lscache.set(EXPIRY_UNITS_KEY, EXPIRY_UNITS);
 
   // Return the module
   return lscache;

@@ -51,7 +51,11 @@ Returned whether or not the given key is expired
 * * *
 
 ### lscache.setExpiryUnitMs
-Change the units used for cache expiration.  Default is minutes (60 * 1000).  Note that this also flushes the lscache so that cache expirations for previously cached data with different expiry units don't become corrupted
+Change the units used for cache expiration.  Default is minutes (60 * 1000).
+
+Note: this flushes the lscache as well if the units differ from what
+was previously used, to ensure that no prior data, using a different
+unit, remains in an invalid cache state
 #### Arguments
 1. `ms` (**number**)
 

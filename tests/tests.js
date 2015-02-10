@@ -195,6 +195,15 @@ var startTests = function (lscache) {
       equal(lscache.get(key), null, 'We expect value to be flushed');
     });
 
+    test('Testing setExpiryUnitMs non-flushing', 1, function() {
+      var key = 'thekey';
+      var value = 'thevalue';
+      var units = 1;
+      lscache.set(key, value, units);
+      lscache.setExpiryUnitMs(60 * 1000);
+      equal(lscache.get(key), null, 'We expect value to not have been flushed');
+    });
+
     // We do this test last since it must wait 1 minute
     asyncTest('Testing set() and get() with string and expiration', 1, function() {
 
