@@ -31,6 +31,11 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     } else {
         // Browser globals
         root.lscacheExtra = factory();
+
+        // If an angular app, also set up as a module for DI
+        if (typeof root.angular !== "undefined" && root.angular.module) {
+          root.angular.module('lscacheExtra', []).constant('lscacheExtra', root.lscacheExtra);
+        }
     }
 }(this, function () {
 
@@ -45,6 +50,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
 
   // time resolution in minutes
   var EXPIRY_UNITS = 60 * 1000;
+  var EXPIRY_UNITS_KEY = '__expiry-units-key';
 
   // ECMAScript max Date (epoch + 1e8 days)
   var MAX_DATE = Math.floor(8.64e15/EXPIRY_UNITS);
@@ -243,13 +249,20 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
      * to cache by minutes, the default, this would be (60 * 1000).  To
      * cache by seconds, this would be 1000.
      *
-     * Note, this flushes the lscache as well, to ensure that no prior data,
-     * using a different unit, remains in an invalid cache state
+     * Note, this flushes the lscache as well if the units differ from what
+     * was previously used, to ensure that no prior data, using a different
+     * unit, remains in an invalid cache state
 
      * @param {number} ms
      */
     setExpiryUnitMs: function (ms) {
-      lscache.flush();
+      var existingUnits = lscache.get(EXPIRY_UNITS_KEY);
+      lscache.set(EXPIRY_UNITS_KEY, ms);
+
+      // Only clear if the new units dont match the old
+      if (existingUnits !== ms) {
+        lscache.flush();
+      }
       EXPIRY_UNITS = ms;
     },
 
@@ -352,6 +365,9 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
       warnings = enabled;
     }
   };
+
+  // Set initial expiry units
+  lscache.set(EXPIRY_UNITS_KEY, EXPIRY_UNITS);
 
   // Return the module
   return lscache;
@@ -2175,6 +2191,15 @@ var startTests = function (lscache) {
       lscache.set(key, value, seconds);
       lscache.setExpiryUnitMs(1000);
       equal(lscache.get(key), null, 'We expect value to be flushed');
+    });
+
+    test('Testing setExpiryUnitMs non-flushing', 1, function() {
+      var key = 'thekey';
+      var value = 'thevalue';
+      var units = 1;
+      lscache.set(key, value, units);
+      lscache.setExpiryUnitMs(60 * 1000);
+      equal(lscache.get(key), null, 'We expect value to not have been flushed');
     });
 
     // We do this test last since it must wait 1 minute
