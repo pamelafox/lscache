@@ -1,3 +1,5 @@
+![Build Status](https://travis-ci.org/brophdawg11/lscache-extra.svg?branch=master)
+
 lscache
 ===============================
 This is a simple library that emulates `memcache` functions using HTML5 `localStorage`, so that you can cache data on the client
