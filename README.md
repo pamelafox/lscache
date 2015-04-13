@@ -23,6 +23,7 @@ Stores the value in localStorage. Expires after specified number of minutes.
 Retrieves specified value from localStorage, if not expired.
 #### Arguments
 1. `key` (**string**)
+
 #### Returns
 **string | Object** : The stored value.
 
