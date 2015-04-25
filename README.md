@@ -25,7 +25,7 @@ Retrieves specified value from localStorage, if not expired.
 1. `key` (**string**)
 
 #### Returns
-**string | Object** : The stored value.
+**string | Object** : The stored value. If no value is available, null is returned.
 
 * * *
 
