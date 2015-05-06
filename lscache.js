@@ -102,7 +102,7 @@
    * @param {String} text
    * @return {string}
    */
-  function escapeRegExpSpecialCharacters (text) {
+  function escapeRegExpSpecialCharacters(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
   }
 
