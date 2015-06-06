@@ -70,7 +70,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
       removeItem(key);
       cachedStorage = true;
     } catch (e) {
-        if (isOutOfSpace(e)) {    // If we hit the limit, then it means we have support, 
+        if (isOutOfSpace(e)) {    // If we hit the limit, then it means we have support,
             cachedStorage = true; // just maxed it out and even the set test failed.
         } else {
             cachedStorage = false;
@@ -81,8 +81,8 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
 
   // Check to set if the error is us dealing with being out of space
   function isOutOfSpace(e) {
-    if (e && e.name === 'QUOTA_EXCEEDED_ERR' || 
-            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || 
+    if (e && e.name === 'QUOTA_EXCEEDED_ERR' ||
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
             e.name === 'QuotaExceededError') {
         return true;
     }
@@ -96,6 +96,15 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
       cachedJSON = (window.JSON != null);
     }
     return cachedJSON;
+  }
+
+  /**
+   * Returns a string where all RegExp special characters are escaped with a \.
+   * @param {String} text
+   * @return {string}
+   */
+  function escapeRegExpSpecialCharacters(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
   }
 
   /**
@@ -134,7 +143,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   }
 
   function eachKey(fn) {
-    var prefixRegExp = new RegExp('^' + CACHE_PREFIX + cacheBucket + '(.*)');
+    var prefixRegExp = new RegExp('^' + CACHE_PREFIX + escapeRegExpSpecialCharacters(cacheBucket) + '(.*)');
     // Loop in reverse as removing items will change indices of tail
     for (var i = localStorage.length-1; i >= 0 ; --i) {
       var key = localStorage.key(i);
@@ -153,19 +162,24 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     removeItem(exprKey);
   }
 
-  function flushExpiredItem(key) {
+  function isExpired(key) {
     var exprKey = expirationKey(key);
     var expr = getItem(exprKey);
 
     if (expr) {
       var expirationTime = parseInt(expr, EXPIRY_RADIX);
 
-      // Check if we should actually kick item out of storage
-      if (currentTime() >= expirationTime) {
-        removeItem(key);
-        removeItem(exprKey);
-        return true;
-      }
+      // Check if the item is expired
+      return currentTime() >= expirationTime;
+    }
+    return false;
+  }
+
+  function flushExpiredItem(key) {
+    // Check if we should actually kick item out of storage
+    if (isExpired(key)) {
+      flushItem(key);
+      return true;
     }
   }
 
@@ -256,18 +270,32 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     },
 
     /**
+     * Is the given item expired
+     * @param  {string}  key Key of the item
+     * @return {Boolean}     Whether the item is expired
+     */
+    isExpired: function (key) {
+      return isExpired(key);
+    },
+
+    /**
      * Retrieves specified value from localStorage, if not expired.
+     * @param {boolean} [skipRemove=false] Don't remove the item if expired
+     * @param {boolean} [allowExpr=false]  Allow returning of expired values
      * @param {string} key
      * @return {string|Object}
      */
-    get: function(key) {
+    get: function(key, skipRemove, allowExpr) {
       if (!supportsStorage()) return null;
-
-      // Return the de-serialized item if not expired
-      if (flushExpiredItem(key)) { return null; }
 
       // Tries to de-serialize stored value if its an object, and returns the normal value otherwise.
       var value = getItem(key);
+
+      if (isExpired(key)) {
+        if (!skipRemove) { flushItem(key); }
+        if (!allowExpr) { return null; }
+      }
+
       if (!value || !supportsJSON()) {
         return value;
       }
@@ -350,6 +378,8 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   return lscache;
 }));
 
+},{}],"qunit":[function(require,module,exports){
+module.exports=require('nCxwBE');
 },{}],"nCxwBE":[function(require,module,exports){
 (function (global){
 (function browserifyShim(module, exports, define, browserify_shim__define__module__export__) {
@@ -1970,15 +2000,14 @@ QUnit.diff = (function() {
 }).call(global, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"qunit":[function(require,module,exports){
-module.exports=require('nCxwBE');
 },{}],4:[function(require,module,exports){
 /* jshint undef:true, browser:true, node:true */
 /* global QUnit, test, equal, asyncTest, start, define */
 
 var startTests = function (lscache) {
-  
+
   var originalConsole = window.console;
+  var CACHE_PREFIX = 'lscache-';
 
   QUnit.module('lscache', {
     setup: function() {
@@ -2191,6 +2220,40 @@ var startTests = function (lscache) {
       }, 1500);
     });
 
+    asyncTest("Test isExpired() function", function() {
+      var key = 'thekey';
+      var value = 'thevalue';
+      var minutes = 1;
+      var strictEqual = window.strictEqual;
+
+      lscache.set(key, value, minutes);
+
+      setTimeout(function () {
+        strictEqual(lscache.isExpired(key), true, 'Ensure the key is considered expired');
+        start();
+      }, 1000*60*minutes + 1000);  // 1 second longer
+    });
+
+    asyncTest("Test get() skipRemove/allowExpired parameters", function() {
+      var key = 'thekey';
+      var value = 'thevalue';
+      var minutes = 1;
+      var strictEqual = window.strictEqual;
+
+      lscache.set(key, value, minutes);
+
+      setTimeout(function () {
+        strictEqual(lscache.get(key, true), null, 'get() should return null for the expired key');
+        strictEqual(localStorage.getItem(CACHE_PREFIX + key), value, 'Ensure the value was not removed in the last get() call');
+        strictEqual(lscache.get(key, true, true), value, 'get() should return the value when allowExpired is true');
+
+        // Now, call without skipRemove, we should get the value but it should also be removed
+        strictEqual(lscache.get(key, false, true), value, 'get() should return the value when allowExpired is true');
+        strictEqual(localStorage.getItem(CACHE_PREFIX + key), null, 'Ensure the value was removed in the last get() call');
+
+        start();
+      }, 1000*60*minutes + 1000);  // 1 second longer
+    });
   }
 
   if (QUnit.config.autostart === false) {
@@ -2204,7 +2267,7 @@ if (typeof module !== "undefined" && module.exports) {
   var qunit = require('qunit');
   startTests(lscache);
 } else if (typeof define === 'function' && define.amd) {
- 
+
   QUnit.config.autostart = false;
   require(['../lscache'], startTests);
 } else {
