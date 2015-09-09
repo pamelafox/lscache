@@ -103,7 +103,7 @@
    * @return {string}
    */
   function escapeRegExpSpecialCharacters(text) {
-    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    return text.replace(/[[\]{}()*+?.\\^$|]/g, '\\$&');
   }
 
   /**
