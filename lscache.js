@@ -69,7 +69,7 @@
       removeItem(key);
       cachedStorage = true;
     } catch (e) {
-        if (isOutOfSpace(e)) {    // If we hit the limit, then it means we have support, 
+        if (isOutOfSpace(e)) {    // If we hit the limit, then it means we have support,
             cachedStorage = true; // just maxed it out and even the set test failed.
         } else {
             cachedStorage = false;
@@ -80,8 +80,8 @@
 
   // Check to set if the error is us dealing with being out of space
   function isOutOfSpace(e) {
-    if (e && e.name === 'QUOTA_EXCEEDED_ERR' || 
-            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || 
+    if (e && e.name === 'QUOTA_EXCEEDED_ERR' ||
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
             e.name === 'QuotaExceededError') {
         return true;
     }
@@ -96,7 +96,7 @@
     }
     return cachedJSON;
   }
-  
+
   /**
    * Returns a string where all RegExp special characters are escaped with a \.
    * @param {String} text
@@ -161,19 +161,24 @@
     removeItem(exprKey);
   }
 
-  function flushExpiredItem(key) {
+  function isExpired(key) {
     var exprKey = expirationKey(key);
     var expr = getItem(exprKey);
 
     if (expr) {
       var expirationTime = parseInt(expr, EXPIRY_RADIX);
 
-      // Check if we should actually kick item out of storage
-      if (currentTime() >= expirationTime) {
-        removeItem(key);
-        removeItem(exprKey);
-        return true;
-      }
+      // Check if the item is expired
+      return currentTime() >= expirationTime;
+    }
+    return false;
+  }
+
+  function flushExpiredItem(key) {
+    // Check if we should actually kick item out of storage
+    if (isExpired(key)) {
+      flushItem(key);
+      return true;
     }
   }
 
@@ -264,18 +269,32 @@
     },
 
     /**
+     * Is the given item expired
+     * @param  {string}  key Key of the item
+     * @return {Boolean}     Whether the item is expired
+     */
+    isExpired: function (key) {
+      return isExpired(key);
+    },
+
+    /**
      * Retrieves specified value from localStorage, if not expired.
+     * @param {boolean} [skipRemove=false] Don't remove the item if expired
+     * @param {boolean} [allowExpr=false]  Allow returning of expired values
      * @param {string} key
      * @return {string|Object}
      */
-    get: function(key) {
+    get: function(key, skipRemove, allowExpr) {
       if (!supportsStorage()) return null;
-
-      // Return the de-serialized item if not expired
-      if (flushExpiredItem(key)) { return null; }
 
       // Tries to de-serialize stored value if its an object, and returns the normal value otherwise.
       var value = getItem(key);
+
+      if (isExpired(key)) {
+        if (!skipRemove) { flushItem(key); }
+        if (!allowExpr) { return null; }
+      }
+
       if (!value || !supportsJSON()) {
         return value;
       }

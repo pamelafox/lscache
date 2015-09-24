@@ -23,9 +23,21 @@ Stores the value in localStorage. Expires after specified number of minutes.
 Retrieves specified value from localStorage, if not expired.
 #### Arguments
 1. `key` (**string**)
+2. `skipRemove` (**boolean**)  Don't remove the item if it is found to be expired [Default: false]
+3. `allowExpired` (**boolean**)  Allow returning of expired values  [Default: false]
 
 #### Returns
 **string | Object** : The stored value. If no value is available, null is returned.
+
+* * *
+
+### lscache.isExpired
+Returned whether or not the given key is expired
+#### Arguments
+1. `key` (**string**)
+
+#### Returns
+**boolean** : Whether or not the cached value is expired
 
 * * *
 
