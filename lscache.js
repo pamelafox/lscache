@@ -64,12 +64,16 @@
       return cachedStorage;
     }
 
+    if (!localStorage) {
+      return false;
+    }
+
     try {
       setItem(key, value);
       removeItem(key);
       cachedStorage = true;
     } catch (e) {
-        if (isOutOfSpace(e)) {    // If we hit the limit, then it means we have support, 
+        if (isOutOfSpace(e) && localStorage.length) {    // If we hit the limit, and we don't have an empty localStorage then it means we have support, 
             cachedStorage = true; // just maxed it out and even the set test failed.
         } else {
             cachedStorage = false;
@@ -80,8 +84,8 @@
 
   // Check to set if the error is us dealing with being out of space
   function isOutOfSpace(e) {
-    if (e && e.name === 'QUOTA_EXCEEDED_ERR' || 
-            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || 
+    if (e && e.name === 'QUOTA_EXCEEDED_ERR' ||
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
             e.name === 'QuotaExceededError') {
         return true;
     }
@@ -96,7 +100,7 @@
     }
     return cachedJSON;
   }
-  
+
   /**
    * Returns a string where all RegExp special characters are escaped with a \.
    * @param {String} text
