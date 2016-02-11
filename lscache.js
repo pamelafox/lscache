@@ -73,7 +73,8 @@
       removeItem(key);
       cachedStorage = true;
     } catch (e) {
-        if (isOutOfSpace(e) && localStorage.length) {    // If we hit the limit, and we don't have an empty localStorage then it means we have support, 
+        // If we hit the limit, and we don't have an empty localStorage then it means we have support
+        if (isOutOfSpace(e) && localStorage.length) {
             cachedStorage = true; // just maxed it out and even the set test failed.
         } else {
             cachedStorage = false;
