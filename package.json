@@ -3,6 +3,7 @@
   "title": "lscache",
   "description": "A simple library that emulates memcache functions using HTML5 localStorage",
   "author": "Pamela Fox",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/pamelafox/lscache.git"
