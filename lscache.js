@@ -64,9 +64,16 @@
       return cachedStorage;
     }
 
-    if (!localStorage) {
+    // some browsers will throw an error if you try to access local storage (e.g. brave browser)
+    // hence check is inside a try/catch
+    try {
+      if (!localStorage) {
+        return false;
+      }
+    } catch (ex) {
       return false;
     }
+
 
     try {
       setItem(key, value);
