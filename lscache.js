@@ -74,7 +74,6 @@
       return false;
     }
 
-
     try {
       setItem(key, value);
       removeItem(key);
