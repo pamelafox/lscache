@@ -22,5 +22,8 @@
   },
   "scripts": {
     "test": "grunt test"
+  },
+  "dependencies": {
+    "ms": "^0.7.1"
   }
 }

@@ -18,6 +18,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
 
 /* jshint undef:true, browser:true, node:true */
 /* global define */
+var ms = require('ms');
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -41,11 +42,8 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   // expiration date radix (set to Base-36 for most space savings)
   var EXPIRY_RADIX = 10;
 
-  // time resolution in minutes
-  var EXPIRY_UNITS = 60 * 1000;
-
   // ECMAScript max Date (epoch + 1e8 days)
-  var MAX_DATE = Math.floor(8.64e15/EXPIRY_UNITS);
+  var MAX_DATE = Math.floor(8.64e15);
 
   var cachedStorage;
   var cachedJSON;
@@ -65,12 +63,23 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
       return cachedStorage;
     }
 
+    // some browsers will throw an error if you try to access local storage (e.g. brave browser)
+    // hence check is inside a try/catch
+    try {
+      if (!localStorage) {
+        return false;
+      }
+    } catch (ex) {
+      return false;
+    }
+
     try {
       setItem(key, value);
       removeItem(key);
       cachedStorage = true;
     } catch (e) {
-        if (isOutOfSpace(e)) {    // If we hit the limit, then it means we have support, 
+        // If we hit the limit, and we don't have an empty localStorage then it means we have support
+        if (isOutOfSpace(e) && localStorage.length) {
             cachedStorage = true; // just maxed it out and even the set test failed.
         } else {
             cachedStorage = false;
@@ -81,8 +90,8 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
 
   // Check to set if the error is us dealing with being out of space
   function isOutOfSpace(e) {
-    if (e && e.name === 'QUOTA_EXCEEDED_ERR' || 
-            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || 
+    if (e && e.name === 'QUOTA_EXCEEDED_ERR' ||
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
             e.name === 'QuotaExceededError') {
         return true;
     }
@@ -99,6 +108,15 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   }
 
   /**
+   * Returns a string where all RegExp special characters are escaped with a \.
+   * @param {String} text
+   * @return {string}
+   */
+  function escapeRegExpSpecialCharacters(text) {
+    return text.replace(/[[\]{}()*+?.\\^$|]/g, '\\$&');
+  }
+
+  /**
    * Returns the full string for the localStorage expiration item.
    * @param {String} key
    * @return {string}
@@ -112,7 +130,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
    * @return {number}
    */
   function currentTime() {
-    return Math.floor((new Date().getTime())/EXPIRY_UNITS);
+    return Math.floor((new Date().getTime()));
   }
 
   /**
@@ -134,7 +152,7 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   }
 
   function eachKey(fn) {
-    var prefixRegExp = new RegExp('^' + CACHE_PREFIX + cacheBucket + '(.*)');
+    var prefixRegExp = new RegExp('^' + CACHE_PREFIX + escapeRegExpSpecialCharacters(cacheBucket) + '(.*)');
     // Loop in reverse as removing items will change indices of tail
     for (var i = localStorage.length-1; i >= 0 ; --i) {
       var key = localStorage.key(i);
@@ -153,22 +171,25 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
     removeItem(exprKey);
   }
 
-  function flushExpiredItem(key) {
+  function isExpired(key) {
     var exprKey = expirationKey(key);
     var expr = getItem(exprKey);
-
-    if (expr) {
+    var isExpr = false;
+    if(expr) {
       var expirationTime = parseInt(expr, EXPIRY_RADIX);
-
-      // Check if we should actually kick item out of storage
-      if (currentTime() >= expirationTime) {
-        removeItem(key);
-        removeItem(exprKey);
-        return true;
-      }
+      isExpr = currentTime() >= expirationTime ? true : false;
     }
+    return isExpr;
   }
 
+  function flushExpiredItem(key) {
+    // Check if we should actually kick item out of storage
+    if (isExpired(key)) {
+      flushItem(key);
+      return true;
+    }
+  }
+  
   function warn(message, err) {
     if (!warnings) return;
     if (!('console' in window) || typeof window.console.warn !== 'function') return;
@@ -177,6 +198,22 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   }
 
   var lscache = {
+    /**
+     * Initialize the default settings
+     * @param {Object} settings
+     */
+    settings: function(settings) {
+      if (settings.cachePrefix !== undefined) {
+        CACHE_PREFIX = settings.cachePrefix;
+      }
+      if (settings.cacheSuffix !== undefined) {
+        CACHE_SUFFIX = settings.cacheSuffix;
+      }
+      if (settings.expiryRadix !== undefined) {
+        EXPIRY_RADIX = settings.expiryRadix;
+      }
+    },
+
     /**
      * Stores the value in localStorage. Expires after specified number of minutes.
      * @param {string} key
@@ -248,7 +285,8 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
 
       // If a time is specified, store expiration info in localStorage
       if (time) {
-        setItem(expirationKey(key), (currentTime() + time).toString(EXPIRY_RADIX));
+        var timeValue = ms(time);
+        setItem(expirationKey(key), (currentTime() + timeValue).toString(EXPIRY_RADIX));
       } else {
         // In case they previously set a time, remove that info from localStorage.
         removeItem(expirationKey(key));
@@ -350,6 +388,135 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
   return lscache;
 }));
 
+},{"ms":2}],2:[function(require,module,exports){
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} options
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function(val, options){
+  options = options || {};
+  if ('string' == typeof val) return parse(val);
+  return options.long
+    ? long(val)
+    : short(val);
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = '' + str;
+  if (str.length > 10000) return;
+  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
+  if (!match) return;
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function short(ms) {
+  if (ms >= d) return Math.round(ms / d) + 'd';
+  if (ms >= h) return Math.round(ms / h) + 'h';
+  if (ms >= m) return Math.round(ms / m) + 'm';
+  if (ms >= s) return Math.round(ms / s) + 's';
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function long(ms) {
+  return plural(ms, d, 'day')
+    || plural(ms, h, 'hour')
+    || plural(ms, m, 'minute')
+    || plural(ms, s, 'second')
+    || ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, n, name) {
+  if (ms < n) return;
+  if (ms < n * 1.5) return Math.floor(ms / n) + ' ' + name;
+  return Math.ceil(ms / n) + ' ' + name + 's';
+}
+
+},{}],"qunit":[function(require,module,exports){
+module.exports=require('nCxwBE');
 },{}],"nCxwBE":[function(require,module,exports){
 (function (global){
 (function browserifyShim(module, exports, define, browserify_shim__define__module__export__) {
@@ -1970,9 +2137,7 @@ QUnit.diff = (function() {
 }).call(global, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"qunit":[function(require,module,exports){
-module.exports=require('nCxwBE');
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /* jshint undef:true, browser:true, node:true */
 /* global QUnit, test, equal, asyncTest, start, define */
 
@@ -2212,4 +2377,4 @@ if (typeof module !== "undefined" && module.exports) {
   startTests(lscache);
 }
 
-},{"../lscache":1,"qunit":"nCxwBE"}]},{},[4])
+},{"../lscache":1,"qunit":"nCxwBE"}]},{},[5])
