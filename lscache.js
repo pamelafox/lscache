@@ -17,6 +17,7 @@
 
 /* jshint undef:true, browser:true, node:true */
 /* global define */
+/* Modified: Added flushAlmoustExpired */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -340,6 +341,33 @@
       eachKey(function(key) {
         flushExpiredItem(key);
       });
+    },
+    flushAlmoustExpired: function(num) {
+      if (!supportsStorage()) return;
+      var keys = [];
+      eachKey(function(key) { keys.push(key); });
+      keys.sort(function(a,b) {
+      var expa = getItem(exprationKey(a)); var exb = getItem(expirationKey(b));
+            if (expa) {
+              expa = parseInt(expa, EXPIRY_RADIX);
+            } else {
+              // TODO: Store date added for non-expiring items for smarter removal
+              expa = MAX_DATE;
+            };
+            if (expb) {
+              expb = parseInt(expb, EXPIRY_RADIX);
+            } else {
+              // TODO: Store date added for non-expiring items for smarter removal
+              expb = MAX_DATE;
+            };
+      return expb - expa;
+      });
+      });
+var nnum = num
+      while (keys.length && nnum > 0) {
+flushItem(keys[nnum]);
+nnum += 1;
+};
     },
 
     /**
