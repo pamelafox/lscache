@@ -90,6 +90,12 @@ if (!lscache.supported()) {
 }
 ```
 
+You can enable console warning if set fails with `lscache.enableWarnings()`:
+
+```js
+lscache.enableWarnings();
+```
+
 The library also takes care of serializing objects, so you can store more complex data:
 
 ```js
