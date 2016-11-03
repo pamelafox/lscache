@@ -81,6 +81,25 @@ You can remove only expired items from the cache entirely with `lscache.flushExp
 lscache.flushExpired();
 ```
 
+You can also check if local storage is supported in the current browser with `lscache.supported()`:
+
+```js
+if (!lscache.supported()) {
+  alert('Local storage is unsupported in this browser');
+  return;
+}
+```
+
+You can enable console warning if set fails with `lscache.enableWarnings()`:
+
+```js
+// enable warnings
+lscache.enableWarnings(true);
+
+// disable warnings
+lscache.enableWarnings(false);
+```
+
 The library also takes care of serializing objects, so you can store more complex data:
 
 ```js
