@@ -17,6 +17,7 @@
 
 /* jshint undef:true, browser:true, node:true */
 /* global define */
+var ms = require('ms');
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -40,11 +41,8 @@
   // expiration date radix (set to Base-36 for most space savings)
   var EXPIRY_RADIX = 10;
 
-  // time resolution in minutes
-  var EXPIRY_UNITS = 60 * 1000;
-
   // ECMAScript max Date (epoch + 1e8 days)
-  var MAX_DATE = Math.floor(8.64e15/EXPIRY_UNITS);
+  var MAX_DATE = Math.floor(8.64e15);
 
   var cachedStorage;
   var cachedJSON;
@@ -131,7 +129,7 @@
    * @return {number}
    */
   function currentTime() {
-    return Math.floor((new Date().getTime())/EXPIRY_UNITS);
+    return Math.floor((new Date().getTime()));
   }
 
   /**
@@ -172,22 +170,25 @@
     removeItem(exprKey);
   }
 
-  function flushExpiredItem(key) {
+  function isExpired(key) {
     var exprKey = expirationKey(key);
     var expr = getItem(exprKey);
-
-    if (expr) {
+    var isExpr = false;
+    if(expr) {
       var expirationTime = parseInt(expr, EXPIRY_RADIX);
-
-      // Check if we should actually kick item out of storage
-      if (currentTime() >= expirationTime) {
-        removeItem(key);
-        removeItem(exprKey);
-        return true;
-      }
+      isExpr = currentTime() >= expirationTime ? true : false;
     }
+    return isExpr;
   }
 
+  function flushExpiredItem(key) {
+    // Check if we should actually kick item out of storage
+    if (isExpired(key)) {
+      flushItem(key);
+      return true;
+    }
+  }
+  
   function warn(message, err) {
     if (!warnings) return;
     if (!('console' in window) || typeof window.console.warn !== 'function') return;
@@ -196,6 +197,22 @@
   }
 
   var lscache = {
+    /**
+     * Initialize the default settings
+     * @param {Object} settings
+     */
+    settings: function(settings) {
+      if (settings.cachePrefix !== undefined) {
+        CACHE_PREFIX = settings.cachePrefix;
+      }
+      if (settings.cacheSuffix !== undefined) {
+        CACHE_SUFFIX = settings.cacheSuffix;
+      }
+      if (settings.expiryRadix !== undefined) {
+        EXPIRY_RADIX = settings.expiryRadix;
+      }
+    },
+
     /**
      * Stores the value in localStorage. Expires after specified number of minutes.
      * @param {string} key
@@ -266,7 +283,8 @@
 
       // If a time is specified, store expiration info in localStorage
       if (time) {
-        setItem(expirationKey(key), (currentTime() + time).toString(EXPIRY_RADIX));
+        var timeValue = ms(time);
+        setItem(expirationKey(key), (currentTime() + timeValue).toString(EXPIRY_RADIX));
       } else {
         // In case they previously set a time, remove that info from localStorage.
         removeItem(expirationKey(key));
