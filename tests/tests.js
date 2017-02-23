@@ -43,6 +43,11 @@ var startTests = function (lscache) {
       lscache.set(key, value, 3);
       equal(lscache.get(key)+1, value+1, 'We expect incremented value to be ' + (value+1));
 
+      key = 'numberstring';
+      value = '2';
+      lscache.set(key, value, 3);
+      equal(lscache.get(key), value, 'We expect number in string to be ' + value);
+
       key = 'arraykey';
       value = ['a', 'b', 'c'];
       lscache.set(key, value, 3);
