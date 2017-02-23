@@ -208,15 +208,14 @@
       // If we don't get a string value, try to stringify
       // In future, localStorage may properly support storing non-strings
       // and this can be removed.
-      if (typeof value !== 'string') {
-        if (!supportsJSON()) return;
-        try {
-          value = JSON.stringify(value);
-        } catch (e) {
-          // Sometimes we can't stringify due to circular refs
-          // in complex objects, so we won't bother storing then.
-          return;
-        }
+
+      if (!supportsJSON()) return;
+      try {
+        value = JSON.stringify(value);
+      } catch (e) {
+        // Sometimes we can't stringify due to circular refs
+        // in complex objects, so we won't bother storing then.
+        return;
       }
 
       try {
