@@ -223,20 +223,27 @@ var startTests = function (lscache) {
 
   }
 
-  if (QUnit.config.autostart === false) {
-    QUnit.start();
-  }
+  QUnit.start();
 };
 
 if (typeof module !== "undefined" && module.exports) {
 
   var lscache = require('../lscache');
-  var qunit = require('qunit');
+  require('qunit');
   startTests(lscache);
 } else if (typeof define === 'function' && define.amd) {
  
-  QUnit.config.autostart = false;
-  require(['../lscache'], startTests);
+  require.config({
+    baseUrl: "./",
+    paths: {
+        "qunit": "qunit",
+        "lscache": "../lscache"
+    }
+  });
+
+  require(['lscache', 'qunit'], function (lscache, QUnit) {
+    startTests(lscache);
+  });
 } else {
   // Assuming that lscache has been properly included
   startTests(lscache);
