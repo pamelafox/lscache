@@ -190,9 +190,17 @@ http://www.quirksmode.org/dom/html5.html
 
 Building
 ----------------
+
+For contributors:
+
 * Run `npm install` to install all the dependencies.
 * Run `grunt`. The default task will check the files with jshint, minify them, and use browserify to generate a bundle for testing.
 * Run `grunt test` to run the tests.
-* Repo owners: run `grunt bump` to tag the new release.
+
+
+For repo owners, after a code change:
+
+* Run `grunt bump` to tag the new release.
+* Run `npm login`, `npm publish` to release on npm.
 
 
