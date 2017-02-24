@@ -131,7 +131,7 @@ This library was originally developed with the use case of caching results of JS
 to speed up my webapps and give them better protection against flaky APIs.
 (More on that in this [blog post](http://blog.pamelafox.org/2010/10/lscache-localstorage-based-memcache.html))
 
-For example, [RageTube](http://ragetube.net) uses `lscache` to fetch Youtube API results for 10 minutes:
+For example, [RageTube](https://github.com/pamelafox/ragetube) uses `lscache` to fetch Youtube API results for 10 minutes:
 
 ```js
 var key = 'youtube:' + query;
@@ -160,7 +160,7 @@ function fetchJSON() {
 
 It does not have to be used for only expiration-based caching, however. It can also be used as just a wrapper for `localStorage`, as it provides the benefit of handling JS object (de-)serialization.
 
-For example, the [QuizCards](http://quizcards.info) Chrome extensions use `lscache`
+For example, the [QuizCards](https://github.com/pamelafox/chrome-cards) Chrome extensions use `lscache`
 to store the user statistics for each user bucket, and those stats are an array
 of objects.
 
