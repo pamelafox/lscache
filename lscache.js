@@ -91,9 +91,9 @@
 
   // Check to set if the error is us dealing with being out of space
   function isOutOfSpace(e) {
-    if (e && e.name === 'QUOTA_EXCEEDED_ERR' ||
+    if (e && (e.name === 'QUOTA_EXCEEDED_ERR' ||
             e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-            e.name === 'QuotaExceededError') {
+            e.name === 'QuotaExceededError')) {
         return true;
     }
     return false;
