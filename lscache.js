@@ -201,6 +201,7 @@
      * @param {string} key
      * @param {Object|string} value
      * @param {number} time
+     * @return true if the value was inserted successfully
      */
     set: function(key, value, time) {
       if (!supportsStorage()) return false;

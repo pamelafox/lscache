@@ -17,6 +17,9 @@ Stores the value in localStorage. Expires after specified number of minutes.
 2. `value` (**Object|string**)
 3. `time` (**number: optional**)
 
+#### Returns
+**boolean** : True if the value was stored successfully.
+
 * * *
 
 ### lscache.get
