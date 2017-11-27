@@ -25,8 +25,8 @@ var startTests = function (lscache) {
   test('Testing set() and get() with string', function() {
     var key = 'thekey';
     var value = 'thevalue';
-    lscache.set(key, value, 1);
-    if (lscache.supported()) {
+    var isset = lscache.set(key, value, 1);
+    if (isset) {
       equal(lscache.get(key), value, 'We expect value to be ' + value);
     } else {
       equal(lscache.get(key), null, 'We expect null value');
@@ -151,7 +151,7 @@ var startTests = function (lscache) {
 
       for (i = 0; i <= numKeys; i++) {
         currentKey = key + i;
-        lscache.set(currentKey, longString, i+1);
+        equal(lscache.set(currentKey, longString, i+1), true, 'We expect new value to be added successfully');
       }
       // Test that last-to-expire is still there
       equal(lscache.get(currentKey), longString, 'We expect newest value to still be there');
@@ -161,14 +161,14 @@ var startTests = function (lscache) {
       // Test trying to add something thats bigger than previous items,
       // check that it is successfully added (requires removal of multiple keys)
       var veryLongString = longString + longString;
-      lscache.set(key + 'long', veryLongString, i+1);
+      equal(lscache.set(key + 'long', veryLongString, i+1), true, 'We expect new value to be added successfully');
       equal(lscache.get(key + 'long'), veryLongString, 'We expect long string to get stored');
 
       // Try the same with no expiry times
       localStorage.clear();
       for (i = 0; i <= numKeys; i++) {
         currentKey = key + i;
-        lscache.set(currentKey, longString);
+        equal(lscache.set(currentKey, longString), true, 'We expect each value to be added successfully');
       }
       // Test that latest added is still there
       equal(lscache.get(currentKey), longString, 'We expect value to be set');
@@ -180,7 +180,7 @@ var startTests = function (lscache) {
       var key = 'thekey';
       var value = 'thevalue';
       var minutes = 1;
-      lscache.set(key, value, minutes);
+      equal(lscache.set(key, value, minutes), true, 'We expect the value to be inserted successfully');
       setTimeout(function() {
         equal(lscache.get(key), null, 'We expect value to be null');
         start();

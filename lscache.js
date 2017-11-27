@@ -203,19 +203,19 @@
      * @param {number} time
      */
     set: function(key, value, time) {
-      if (!supportsStorage()) return;
+      if (!supportsStorage()) return false;
 
       // If we don't get a string value, try to stringify
       // In future, localStorage may properly support storing non-strings
       // and this can be removed.
 
-      if (!supportsJSON()) return;
+      if (!supportsJSON()) return false;
       try {
         value = JSON.stringify(value);
       } catch (e) {
         // Sometimes we can't stringify due to circular refs
         // in complex objects, so we won't bother storing then.
-        return;
+        return false;
       }
 
       try {
@@ -255,12 +255,12 @@
           } catch (e) {
             // value may be larger than total quota
             warn("Could not add item with key '" + key + "', perhaps it's too big?", e);
-            return;
+            return false;
           }
         } else {
           // If it was some other error, just give up.
           warn("Could not add item with key '" + key + "'", e);
-          return;
+          return false;
         }
       }
 
@@ -271,6 +271,7 @@
         // In case they previously set a time, remove that info from localStorage.
         removeItem(expirationKey(key));
       }
+      return true;
     },
 
     /**
