@@ -360,20 +360,22 @@
     },
 
     /**
-     * @returns {number} The currently set number of milliseconds each time unit represents in the set() function's "time" argument.
+     * @returns {number} The currently set number of milliseconds each time unit represents in
+     *   the set() function's "time" argument.
      */
     getExpiryMilliseconds: function() {
       return expiryMilliseconds;
     },
 
     /**
-     * Sets the number of milliseconds each time unit represents in the set() function's "time" argument.
+     * Sets the number of milliseconds each time unit represents in the set() function's
+     *   "time" argument.
      * Sample values:
      *  1: each time unit = 1 millisecond
      *  1000: each time unit = 1 second
      *  60000: each time unit = 1 minute (Default value)
      *  360000: each time unit = 1 hour
-     * @param {int} milliseconds
+     * @param {number} milliseconds
      */
     setExpiryMilliseconds: function(milliseconds) {
         expiryMilliseconds = milliseconds;
