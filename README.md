@@ -6,7 +6,7 @@ and associate an expiration time with each piece of data. If the `localStorage` 
 Methods
 -------
 
-The library exposes 7 methods: `set()`, `get()`, `remove()`, `flush()`, `flushExpired`, `setBucket()`, and `setExpiryMilliseconds()`.
+The library exposes these methods: `set()`, `get()`, `remove()`, `flush()`, `flushExpired()`, `setBucket()`, `resetBucket()`, `setExpiryMilliseconds()`.
 
 * * *
 
@@ -47,9 +47,14 @@ Removes all expired lscache items from localStorage without affecting other data
 * * *
 
 ### lscache.setBucket
-Appends CACHE_PREFIX so lscache will partition data in to different buckets
+Appends CACHE_PREFIX so lscache will partition data in to different buckets.
 #### Arguments
 1. `bucket` (**string**)
+
+* * *
+
+### lscache.resetBucket
+Removes prefix from keys so that lscache no longer stores in a particular bucket.
 
 * * *
 
