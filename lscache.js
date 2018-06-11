@@ -40,11 +40,10 @@
   // expiration date radix (set to Base-36 for most space savings)
   var EXPIRY_RADIX = 10;
 
-  // time resolution in minutes
-  var EXPIRY_UNITS = 60 * 1000;
-
+  // time resolution in milliseconds
+  var expiryMilliseconds = 60 * 1000;
   // ECMAScript max Date (epoch + 1e8 days)
-  var MAX_DATE = Math.floor(8.64e15/EXPIRY_UNITS);
+  var maxDate = calculateMaxDate(expiryMilliseconds);
 
   var cachedStorage;
   var cachedJSON;
@@ -130,7 +129,7 @@
    * @return {number}
    */
   function currentTime() {
-    return Math.floor((new Date().getTime())/EXPIRY_UNITS);
+    return Math.floor((new Date().getTime())/expiryMilliseconds);
   }
 
   /**
@@ -194,6 +193,10 @@
     if (err) window.console.warn("lscache - The error was: " + err.message);
   }
 
+  function calculateMaxDate(expiryMilliseconds) {
+    return Math.floor(8.64e15/expiryMilliseconds);
+  }
+
   var lscache = {
     /**
      * Stores the value in localStorage. Expires after specified number of minutes.
@@ -231,7 +234,7 @@
               expiration = parseInt(expiration, EXPIRY_RADIX);
             } else {
               // TODO: Store date added for non-expiring items for smarter removal
-              expiration = MAX_DATE;
+              expiration = maxDate;
             }
             storedKeys.push({
               key: key,
@@ -353,6 +356,29 @@
      */
     resetBucket: function() {
       cacheBucket = '';
+    },
+
+    /**
+     * @returns {number} The currently set number of milliseconds each time unit represents in
+     *   the set() function's "time" argument.
+     */
+    getExpiryMilliseconds: function() {
+      return expiryMilliseconds;
+    },
+
+    /**
+     * Sets the number of milliseconds each time unit represents in the set() function's
+     *   "time" argument.
+     * Sample values:
+     *  1: each time unit = 1 millisecond
+     *  1000: each time unit = 1 second
+     *  60000: each time unit = 1 minute (Default value)
+     *  360000: each time unit = 1 hour
+     * @param {number} milliseconds
+     */
+    setExpiryMilliseconds: function(milliseconds) {
+        expiryMilliseconds = milliseconds;
+        maxDate = calculateMaxDate(expiryMilliseconds);
     },
 
     /**
