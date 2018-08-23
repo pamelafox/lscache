@@ -6,7 +6,7 @@ and associate an expiration time with each piece of data. If the `localStorage` 
 Methods
 -------
 
-The library exposes 5 methods: `set()`, `get()`, `remove()`, `flush()`, and `setBucket()`.
+The library exposes these methods: `set()`, `get()`, `remove()`, `flush()`, `flushExpired()`, `setBucket()`, `resetBucket()`, `setExpiryMilliseconds()`.
 
 * * *
 
@@ -41,10 +41,31 @@ Removes all lscache items from localStorage without affecting other data.
 
 * * *
 
+### lscache.flushExpired
+Removes all expired lscache items from localStorage without affecting other data.
+
+* * *
+
 ### lscache.setBucket
-Appends CACHE_PREFIX so lscache will partition data in to different buckets
+Appends CACHE_PREFIX so lscache will partition data in to different buckets.
 #### Arguments
 1. `bucket` (**string**)
+
+* * *
+
+### lscache.resetBucket
+Removes prefix from keys so that lscache no longer stores in a particular bucket.
+
+* * *
+
+### lscache.setExpiryMilliseconds
+Sets the number of milliseconds each time unit represents in the set() function's "time" argument. Sample values:
+*  1: each time unit = 1 millisecond
+*  1000: each time unit = 1 second
+*  60000: each time unit = 1 minute (Default value)
+*  360000: each time unit = 1 hour
+#### Arguments
+1. `milliseconds` (**number**)
 
 Usage
 -------
@@ -119,6 +140,21 @@ lscache.set('response', '...', 2);
 lscache.setBucket('lib');
 lscache.set('path', '...', 2);
 lscache.flush(); //only removes 'path' which was set in the lib bucket
+```
+
+The default unit for the `set()` function's "time" argument is minutes.  A shorter time may be desired, for example, in unit tests.  You can use `lscache.setExpriryMilliseconds()` to select a finer granularity of time unit:
+```js
+asyncTest('Testing set() and get() with different units', function() {´
+  var expiryMilliseconds = 1000;  //time units is seconds
+  lscache.setExpiryMilliseconds(expiryMilliseconds);
+  var key = 'thekey';
+  var numExpiryUnits = 2; // expire after two seconds
+  lscache.set(key, 'some value', numExpiryUnits);
+  setTimeout(function() {
+    equal(lscache.get(key), null, 'We expect value to be null');
+    start();
+  }, expiryMilliseconds*numExpiryUnits + 1);
+});
 ```
 
 For more live examples, play around with the demo here:

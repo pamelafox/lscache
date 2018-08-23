@@ -174,6 +174,24 @@ var startTests = function (lscache) {
       equal(lscache.get(currentKey), longString, 'We expect value to be set');
     });
 
+    asyncTest('Testing set() and get() with string and expiration and different units', function() {
+      var oldExpiryMilliseconds = lscache.getExpiryMilliseconds();
+      var expiryMilliseconds = 1000;
+      lscache.setExpiryMilliseconds(expiryMilliseconds);
+      var key = 'thekey';
+      var value = 'thevalue';
+      var numExpiryUnits = 1;
+      lscache.set(key, value, numExpiryUnits);
+      equal(lscache.get(key), value, 'We expect value to be available pre-expiration');
+      setTimeout(function() {
+        equal(lscache.get(key), null, 'We expect value to be null');
+
+        //restore the previous expiryMilliseconds setting
+        lscache.setExpiryMilliseconds(oldExpiryMilliseconds);
+        start();
+      }, expiryMilliseconds*numExpiryUnits);
+    });
+
     // We do this test last since it must wait 1 minute
     asyncTest('Testing set() and get() with string and expiration', 1, function() {
 
@@ -206,17 +224,27 @@ var startTests = function (lscache) {
     });
 
     asyncTest('Testing flush(expired)', function() {
+      var oldExpiryMilliseconds = lscache.getExpiryMilliseconds();
+      var expiryMilliseconds = 1;
+      lscache.setExpiryMilliseconds(expiryMilliseconds);
+
       localStorage.setItem('outside-cache', 'not part of lscache');
       var unexpiredKey = 'unexpiredKey';
       var expiredKey = 'expiredKey';
-      lscache.set(unexpiredKey, 'bla', 1);
-      lscache.set(expiredKey, 'blech', 1/60); // Expire after one second
+      lscache.set(unexpiredKey, 'bla', 10000); // Expires in ten seconds
+      lscache.set(expiredKey, 'blech', 1000); // Expire after one second
+
+      equal(lscache.get(unexpiredKey), 'bla', 'Should not be expired yet');
+      equal(lscache.get(expiredKey), 'blech', 'Should not be expired yet');
 
       setTimeout(function() {
         lscache.flushExpired();
         equal(lscache.get(unexpiredKey), 'bla', 'We expect unexpired value to survive flush');
         equal(lscache.get(expiredKey), null, 'We expect expired value to be flushed');
         equal(localStorage.getItem('outside-cache'), 'not part of lscache', 'We expect localStorage value to still persist');
+
+        //restore the previous expiryMilliseconds setting
+        lscache.setExpiryMilliseconds(oldExpiryMilliseconds);
         start();
       }, 1500);
     });
