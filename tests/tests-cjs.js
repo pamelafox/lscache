@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 /**
  * lscache library
  * Copyright (c) 2011, Pamela Fox
@@ -41,11 +41,10 @@
   // expiration date radix (set to Base-36 for most space savings)
   var EXPIRY_RADIX = 10;
 
-  // time resolution in minutes
-  var EXPIRY_UNITS = 60 * 1000;
-
+  // time resolution in milliseconds
+  var expiryMilliseconds = 60 * 1000;
   // ECMAScript max Date (epoch + 1e8 days)
-  var MAX_DATE = Math.floor(8.64e15/EXPIRY_UNITS);
+  var maxDate = calculateMaxDate(expiryMilliseconds);
 
   var cachedStorage;
   var cachedJSON;
@@ -92,12 +91,11 @@
 
   // Check to set if the error is us dealing with being out of space
   function isOutOfSpace(e) {
-    if (e && e.name === 'QUOTA_EXCEEDED_ERR' ||
-            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-            e.name === 'QuotaExceededError') {
-        return true;
-    }
-    return false;
+    return e && (
+      e.name === 'QUOTA_EXCEEDED_ERR' ||
+      e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+      e.name === 'QuotaExceededError'
+    );
   }
 
   // Determines if native JSON (de-)serialization is supported in the browser.
@@ -132,7 +130,7 @@
    * @return {number}
    */
   function currentTime() {
-    return Math.floor((new Date().getTime())/EXPIRY_UNITS);
+    return Math.floor((new Date().getTime())/expiryMilliseconds);
   }
 
   /**
@@ -196,6 +194,10 @@
     if (err) window.console.warn("lscache - The error was: " + err.message);
   }
 
+  function calculateMaxDate(expiryMilliseconds) {
+    return Math.floor(8.64e15/expiryMilliseconds);
+  }
+
   var lscache = {
     /**
      * Stores the value in localStorage. Expires after specified number of minutes.
@@ -233,7 +235,7 @@
               expiration = parseInt(expiration, EXPIRY_RADIX);
             } else {
               // TODO: Store date added for non-expiring items for smarter removal
-              expiration = MAX_DATE;
+              expiration = maxDate;
             }
             storedKeys.push({
               key: key,
@@ -355,6 +357,29 @@
      */
     resetBucket: function() {
       cacheBucket = '';
+    },
+
+    /**
+     * @returns {number} The currently set number of milliseconds each time unit represents in
+     *   the set() function's "time" argument.
+     */
+    getExpiryMilliseconds: function() {
+      return expiryMilliseconds;
+    },
+
+    /**
+     * Sets the number of milliseconds each time unit represents in the set() function's
+     *   "time" argument.
+     * Sample values:
+     *  1: each time unit = 1 millisecond
+     *  1000: each time unit = 1 second
+     *  60000: each time unit = 1 minute (Default value)
+     *  360000: each time unit = 1 hour
+     * @param {number} milliseconds
+     */
+    setExpiryMilliseconds: function(milliseconds) {
+        expiryMilliseconds = milliseconds;
+        maxDate = calculateMaxDate(expiryMilliseconds);
     },
 
     /**
@@ -556,6 +581,24 @@ var startTests = function (lscache) {
       equal(lscache.get(currentKey), longString, 'We expect value to be set');
     });
 
+    asyncTest('Testing set() and get() with string and expiration and different units', function() {
+      var oldExpiryMilliseconds = lscache.getExpiryMilliseconds();
+      var expiryMilliseconds = 1000;
+      lscache.setExpiryMilliseconds(expiryMilliseconds);
+      var key = 'thekey';
+      var value = 'thevalue';
+      var numExpiryUnits = 1;
+      lscache.set(key, value, numExpiryUnits);
+      equal(lscache.get(key), value, 'We expect value to be available pre-expiration');
+      setTimeout(function() {
+        equal(lscache.get(key), null, 'We expect value to be null');
+
+        //restore the previous expiryMilliseconds setting
+        lscache.setExpiryMilliseconds(oldExpiryMilliseconds);
+        start();
+      }, expiryMilliseconds*numExpiryUnits);
+    });
+
     // We do this test last since it must wait 1 minute
     asyncTest('Testing set() and get() with string and expiration', 1, function() {
 
@@ -588,17 +631,27 @@ var startTests = function (lscache) {
     });
 
     asyncTest('Testing flush(expired)', function() {
+      var oldExpiryMilliseconds = lscache.getExpiryMilliseconds();
+      var expiryMilliseconds = 1;
+      lscache.setExpiryMilliseconds(expiryMilliseconds);
+
       localStorage.setItem('outside-cache', 'not part of lscache');
       var unexpiredKey = 'unexpiredKey';
       var expiredKey = 'expiredKey';
-      lscache.set(unexpiredKey, 'bla', 1);
-      lscache.set(expiredKey, 'blech', 1/60); // Expire after one second
+      lscache.set(unexpiredKey, 'bla', 10000); // Expires in ten seconds
+      lscache.set(expiredKey, 'blech', 1000); // Expire after one second
+
+      equal(lscache.get(unexpiredKey), 'bla', 'Should not be expired yet');
+      equal(lscache.get(expiredKey), 'blech', 'Should not be expired yet');
 
       setTimeout(function() {
         lscache.flushExpired();
         equal(lscache.get(unexpiredKey), 'bla', 'We expect unexpired value to survive flush');
         equal(lscache.get(expiredKey), null, 'We expect expired value to be flushed');
         equal(localStorage.getItem('outside-cache'), 'not part of lscache', 'We expect localStorage value to still persist');
+
+        //restore the previous expiryMilliseconds setting
+        lscache.setExpiryMilliseconds(oldExpiryMilliseconds);
         start();
       }, 1500);
     });
