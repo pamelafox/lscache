@@ -224,6 +224,7 @@ var startTests = function (lscache) {
       equal(lscache.set(key + 'long', veryLongString), false, 'We expect new value to be too long');
       equal(lscache.get(key + 'long'), null, 'We expect nothing was stored');
     });
+
     // We do this test last since it must wait 1 minute
     asyncTest('Testing set() and get() with string and expiration', 1, function() {
 
