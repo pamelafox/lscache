@@ -25,8 +25,8 @@ var startTests = function (lscache) {
   test('Testing set() and get() with string', function() {
     var key = 'thekey';
     var value = 'thevalue';
-    var isset = lscache.set(key, value, 1);
-    if (isset) {
+    var isSet = lscache.set(key, value, 1);
+    if (isSet) {
       equal(lscache.get(key), value, 'We expect value to be ' + value);
     } else {
       equal(lscache.get(key), null, 'We expect null value');
@@ -73,6 +73,16 @@ var startTests = function (lscache) {
       lscache.flush();
       equal(lscache.get(key), null, 'We expect flushed value to be null');
       equal(localStorage.getItem('outside-cache'), 'not part of lscache', 'We expect localStorage value to still persist');
+    });
+
+    test('Testing set() fails with circular references', function() {
+      var key, value;
+
+      key = 'objectkey';
+      value = {'name': 'Pamela', 'age': 26};
+      value.itself = value;
+      equal(lscache.set(key, value, 3), false, 'We expect the value cannot be stored');
+      equal(lscache.get(key), null, 'We expect value was not stored');
     });
 
     test('Testing setBucket()', function() {
@@ -172,6 +182,29 @@ var startTests = function (lscache) {
       }
       // Test that latest added is still there
       equal(lscache.get(currentKey), longString, 'We expect value to be set');
+    });
+
+    test('Testing single item exceeds quota', function() {
+      var key = 'thekey';
+      var stringLength = 10000;
+      var longString = (new Array(stringLength+1)).join('s');
+
+      // Figure out this browser's localStorage limit -
+      // Chrome is around 2.6 mil, for example
+      var num = 0;
+      while(num < 10000) {
+        try {
+          localStorage.setItem(key + num, longString);
+          num++;
+        } catch (e) {
+          break;
+        }
+      }
+      localStorage.clear();
+      // Now make string long enough to go over limit.
+      var veryLongString  = (new Array(num+3)).join(longString);
+      equal(lscache.set(key + 'long', veryLongString), false, 'We expect new value to be too long');
+      equal(lscache.get(key + 'long'), null, 'We expect nothing was stored');
     });
 
     // We do this test last since it must wait 1 minute
