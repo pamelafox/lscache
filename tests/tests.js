@@ -231,7 +231,7 @@ var startTests = function (lscache) {
       var key = 'thekey';
       var value = 'thevalue';
       var minutes = 1;
-      equal(lscache.set(key, value, minutes), true, 'We expect the value to be inserted successfully');
+      lscache.set(key, value, minutes);
       setTimeout(function() {
         equal(lscache.get(key), null, 'We expect value to be null');
         start();

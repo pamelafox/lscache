@@ -204,21 +204,22 @@
      * @param {string} key
      * @param {Object|string} value
      * @param {number} time
+     * @return true if the value was inserted successfully
      */
     set: function(key, value, time) {
-      if (!supportsStorage()) return;
+      if (!supportsStorage()) return false;
 
       // If we don't get a string value, try to stringify
       // In future, localStorage may properly support storing non-strings
       // and this can be removed.
 
-      if (!supportsJSON()) return;
+      if (!supportsJSON()) return false;
       try {
         value = JSON.stringify(value);
       } catch (e) {
         // Sometimes we can't stringify due to circular refs
         // in complex objects, so we won't bother storing then.
-        return;
+        return false;
       }
 
       try {
@@ -258,12 +259,12 @@
           } catch (e) {
             // value may be larger than total quota
             warn("Could not add item with key '" + key + "', perhaps it's too big?", e);
-            return;
+            return false;
           }
         } else {
           // If it was some other error, just give up.
           warn("Could not add item with key '" + key + "'", e);
-          return;
+          return false;
         }
       }
 
@@ -274,6 +275,7 @@
         // In case they previously set a time, remove that info from localStorage.
         removeItem(expirationKey(key));
       }
+      return true;
     },
 
     /**
@@ -432,8 +434,8 @@ var startTests = function (lscache) {
   test('Testing set() and get() with string', function() {
     var key = 'thekey';
     var value = 'thevalue';
-    lscache.set(key, value, 1);
-    if (lscache.supported()) {
+    var isSet = lscache.set(key, value, 1);
+    if (isSet) {
       equal(lscache.get(key), value, 'We expect value to be ' + value);
     } else {
       equal(lscache.get(key), null, 'We expect null value');
@@ -480,6 +482,16 @@ var startTests = function (lscache) {
       lscache.flush();
       equal(lscache.get(key), null, 'We expect flushed value to be null');
       equal(localStorage.getItem('outside-cache'), 'not part of lscache', 'We expect localStorage value to still persist');
+    });
+
+    test('Testing set() fails with circular references', function() {
+      var key, value;
+
+      key = 'objectkey';
+      value = {'name': 'Pamela', 'age': 26};
+      value.itself = value;
+      equal(lscache.set(key, value, 3), false, 'We expect the value cannot be stored');
+      equal(lscache.get(key), null, 'We expect value was not stored');
     });
 
     test('Testing setBucket()', function() {
@@ -558,7 +570,7 @@ var startTests = function (lscache) {
 
       for (i = 0; i <= numKeys; i++) {
         currentKey = key + i;
-        lscache.set(currentKey, longString, i+1);
+        equal(lscache.set(currentKey, longString, i+1), true, 'We expect new value to be added successfully');
       }
       // Test that last-to-expire is still there
       equal(lscache.get(currentKey), longString, 'We expect newest value to still be there');
@@ -568,14 +580,14 @@ var startTests = function (lscache) {
       // Test trying to add something thats bigger than previous items,
       // check that it is successfully added (requires removal of multiple keys)
       var veryLongString = longString + longString;
-      lscache.set(key + 'long', veryLongString, i+1);
+      equal(lscache.set(key + 'long', veryLongString, i+1), true, 'We expect new value to be added successfully');
       equal(lscache.get(key + 'long'), veryLongString, 'We expect long string to get stored');
 
       // Try the same with no expiry times
       localStorage.clear();
       for (i = 0; i <= numKeys; i++) {
         currentKey = key + i;
-        lscache.set(currentKey, longString);
+        equal(lscache.set(currentKey, longString), true, 'We expect each value to be added successfully');
       }
       // Test that latest added is still there
       equal(lscache.get(currentKey), longString, 'We expect value to be set');
@@ -597,6 +609,29 @@ var startTests = function (lscache) {
         lscache.setExpiryMilliseconds(oldExpiryMilliseconds);
         start();
       }, expiryMilliseconds*numExpiryUnits);
+    });
+
+    test('Testing single item exceeds quota', function() {
+      var key = 'thekey';
+      var stringLength = 10000;
+      var longString = (new Array(stringLength+1)).join('s');
+
+      // Figure out this browser's localStorage limit -
+      // Chrome is around 2.6 mil, for example
+      var num = 0;
+      while(num < 10000) {
+        try {
+          localStorage.setItem(key + num, longString);
+          num++;
+        } catch (e) {
+          break;
+        }
+      }
+      localStorage.clear();
+      // Now make string long enough to go over limit.
+      var veryLongString  = (new Array(num+3)).join(longString);
+      equal(lscache.set(key + 'long', veryLongString), false, 'We expect new value to be too long');
+      equal(lscache.get(key + 'long'), null, 'We expect nothing was stored');
     });
 
     // We do this test last since it must wait 1 minute
@@ -683,4 +718,5 @@ if (typeof module !== "undefined" && module.exports) {
   // Assuming that lscache has been properly included
   startTests(lscache);
 }
+
 },{"../lscache":1,"qunit":2}]},{},[3]);
