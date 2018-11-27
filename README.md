@@ -66,7 +66,7 @@ Sets the number of milliseconds each time unit represents in the set() function'
 *  1: each time unit = 1 millisecond
 *  1000: each time unit = 1 second
 *  60000: each time unit = 1 minute (Default value)
-*  360000: each time unit = 1 hour
+*  3600000: each time unit = 1 hour
 #### Arguments
 1. `milliseconds` (**number**)
 
