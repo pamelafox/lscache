@@ -45,6 +45,9 @@
   // ECMAScript max Date (epoch + 1e8 days)
   var maxDate = calculateMaxDate(expiryMilliseconds);
 
+  // Names to identify exceeded quota errors by
+  var quotaExceeded = ['QUOTA_EXCEEDED_ERR', 'NS_ERROR_DOM_QUOTA_REACHED', 'QuotaExceededError'];
+
   var cachedStorage;
   var cachedJSON;
   var cacheBucket = '';
@@ -90,11 +93,7 @@
 
   // Check to set if the error is us dealing with being out of space
   function isOutOfSpace(e) {
-    return e && (
-      e.name === 'QUOTA_EXCEEDED_ERR' ||
-      e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-      e.name === 'QuotaExceededError'
-    );
+    return e && quotaExceeded.indexOf(e.name) !== -1;
   }
 
   // Determines if native JSON (de-)serialization is supported in the browser.
