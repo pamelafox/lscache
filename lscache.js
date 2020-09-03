@@ -152,6 +152,7 @@
 
   function eachKey(fn) {
     var prefixRegExp = new RegExp('^' + CACHE_PREFIX + escapeRegExpSpecialCharacters(cacheBucket) + '(.*)');
+    var key;
 
     for (key in localStorage) {
       key = key && key.match(prefixRegExp);
