@@ -1,0 +1,58 @@
+<html>
+    <head>
+        <script src="lscache.js"></script>
+    </head>
+    <body>
+        <button id="flush">Flush</button>
+        <script>
+            function flushBucket(bucket) {
+                lscache.setBucket(bucket);
+                lscache.flush();
+                lscache.resetBucket();
+            }
+
+            document.getElementById('flush').addEventListener('click', () => {
+                flushBucket('bucket1');
+                flushBucket('bucket2');
+                flushBucket('bucket3');
+                flushBucket('bucket4');
+            });
+
+            lscache.setBucket('bucket1');
+            lscache.set('key1', 1);
+            lscache.set('key2', 2);
+            lscache.set('key3', 3);
+            lscache.set('key4', 4);
+            lscache.set('key5', 5);
+            lscache.set('key6', 6);
+            lscache.set('key7', 7);
+            lscache.set('key8', 8);
+            lscache.set('key9', 9);
+            lscache.set('key10', 10);
+            lscache.set('key11', 11);
+            lscache.set('key12', 12);
+
+            lscache.setBucket('bucket2');
+            lscache.set('key1', 1);
+            lscache.set('key2', 2);
+            lscache.set('key3', 3);
+            lscache.set('key4', 4);
+            lscache.set('key5', 5);
+            lscache.set('key6', 6);
+            lscache.set('key7', 7);
+            lscache.set('key8', 8);
+            lscache.set('key9', 9);
+            lscache.set('key10', 10);
+            lscache.set('key11', 11);
+            lscache.set('key12', 12);
+
+            lscache.setBucket('bucket3');
+            lscache.set('key1', 1);
+            lscache.set('key2', 2);
+
+            lscache.setBucket('bucket4');
+            lscache.set('key1', 1);
+            lscache.set('key2', 2);
+        </script>
+    </body>
+</html>
