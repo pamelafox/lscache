@@ -153,14 +153,21 @@
 
   function eachKey(fn) {
     var prefixRegExp = new RegExp('^' + CACHE_PREFIX + escapeRegExpSpecialCharacters(cacheBucket) + '(.*)');
-    // Loop in reverse as removing items will change indices of tail
-    for (var i = localStorage.length-1; i >= 0 ; --i) {
-      var key = localStorage.key(i);
+    // We first identify which keys to process
+    var keysToProcess = [];
+    var key, i;
+    for (i = 0; i < localStorage.length; i++) {
+      key = localStorage.key(i);
       key = key && key.match(prefixRegExp);
       key = key && key[1];
       if (key && key.indexOf(CACHE_SUFFIX) < 0) {
-        fn(key, expirationKey(key));
+        keysToProcess.push(key);
       }
+    }
+    // Then we apply the processing function to each key
+    for (i = 0; i < keysToProcess.length; i++) {
+      key = keysToProcess[i];
+      fn(key, expirationKey(key));
     }
   }
 
@@ -689,6 +696,34 @@ var startTests = function (lscache) {
         lscache.setExpiryMilliseconds(oldExpiryMilliseconds);
         start();
       }, 1500);
+    });
+
+    test('Testing flushBucket', function() {
+      // Fill a bunch of buckets
+      var b, k;
+      var numBuckets = 4;
+      var numKeys = 12;
+      for (b = 0; b < numBuckets; b++) {
+        lscache.setBucket('bucket' + b);
+        for (k = 0; k < numKeys; k++) {
+          lscache.set('key' + k, 1);
+        }
+      }
+
+      // Now flush them
+      for (b = 0; b < numBuckets; b++) {
+        lscache.setBucket('bucket' + b);
+        lscache.flush();
+        lscache.resetBucket();
+      }
+
+      // All keys should be removed
+      for (b = 0; b < numBuckets; b++) {
+        lscache.setBucket('bucket' + b);
+        for (k = 0; k < numKeys; k++) {
+          equal(lscache.get('key' + k), null, 'We expect flushed value to be null');
+        }
+      }
     });
 
   }

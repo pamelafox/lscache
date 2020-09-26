@@ -282,6 +282,34 @@ var startTests = function (lscache) {
       }, 1500);
     });
 
+    test('Testing flushBucket', function() {
+      // Fill a bunch of buckets
+      var b, k;
+      var numBuckets = 4;
+      var numKeys = 12;
+      for (b = 0; b < numBuckets; b++) {
+        lscache.setBucket('bucket' + b);
+        for (k = 0; k < numKeys; k++) {
+          lscache.set('key' + k, 1);
+        }
+      }
+
+      // Now flush them
+      for (b = 0; b < numBuckets; b++) {
+        lscache.setBucket('bucket' + b);
+        lscache.flush();
+        lscache.resetBucket();
+      }
+
+      // All keys should be removed
+      for (b = 0; b < numBuckets; b++) {
+        lscache.setBucket('bucket' + b);
+        for (k = 0; k < numKeys; k++) {
+          equal(lscache.get('key' + k), null, 'We expect flushed value to be null');
+        }
+      }
+    });
+
   }
 
   QUnit.start();
