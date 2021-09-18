@@ -249,7 +249,7 @@
           var targetSize = (value||'').length;
           while (storedKeys.length && targetSize > 0) {
             storedKey = storedKeys.pop();
-            warn("Cache is full, removing item with key '" + key + "'");
+            warn("Cache is full, removing item with key '" + storedKey.key + "'");
             flushItem(storedKey.key);
             targetSize -= storedKey.size;
           }
