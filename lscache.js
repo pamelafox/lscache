@@ -165,8 +165,7 @@
     }
     // Then we apply the processing function to each key
     for (i = 0; i < keysToProcess.length; i++) {
-      key = keysToProcess[i];
-      fn(key, expirationKey(key));
+      fn(keysToProcess[i], expirationKey(keysToProcess[i]));
     }
   }
 
