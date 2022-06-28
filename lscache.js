@@ -205,6 +205,26 @@
 
   var lscache = {
     /**
+     * Initialize the default settings
+     * @param {Object} settings
+     */
+    settings: function(settings) {
+      if (settings.cachePrefix !== undefined)
+        CACHE_PREFIX = settings.cachePrefix;
+        
+      if (settings.cacheSuffix !== undefined)
+        CACHE_SUFFIX = settings.cacheSuffix;
+        
+      if (settings.expiryRadix !== undefined)
+        EXPIRY_RADIX = settings.expiryRadix;
+        
+      if (settings.expiryUnits !== undefined) {
+        EXPIRY_UNITS = settings.expiryUnits;
+        MAX_DATE = Math.floor(8.64e15/EXPIRY_UNITS);
+      }
+    },
+    
+    /**
      * Stores the value in localStorage. Expires after specified number of minutes.
      * @param {string} key
      * @param {Object|string} value
